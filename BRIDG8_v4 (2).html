@@ -1,0 +1,3807 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BRIDG8 — Modon Innovation Platform</title>
+<style>
+  /* =============================================================
+     DESIGN TOKENS
+     ============================================================= */
+  :root {
+    /* Brand palette - Modon-aligned */
+    --navy:        #0E2841;
+    --navyDk:      #081929;
+    --navyLt:      #1a3a55;
+    --teal:        #5B9E8E;
+    --tealDk:      #3F7D71;
+    --tealLt:      #D7E8E3;
+    --tealXLt:     #EEF5F3;
+    --amber:       #D98943;
+    --amberLt:     #F6E6D5;
+    --red:         #B4453E;
+    --redLt:       #F4DDDB;
+    --green:       #4A7C59;
+    --greenLt:     #DCEBE1;
+    --charcoal:    #2A3440;
+    --gray:        #6B7280;
+    --grayLt:      #E5E7EB;
+    --grayXLt:     #F3F4F6;
+    --offwhite:    #F8F9FA;
+    --white:       #FFFFFF;
+
+    /* Effects */
+    --shadow-sm:   0 1px 2px rgba(14,40,65,0.04);
+    --shadow:      0 2px 6px rgba(14,40,65,0.06), 0 1px 2px rgba(14,40,65,0.04);
+    --shadow-md:   0 4px 12px rgba(14,40,65,0.08), 0 2px 4px rgba(14,40,65,0.04);
+    --shadow-lg:   0 12px 32px rgba(14,40,65,0.12), 0 4px 8px rgba(14,40,65,0.04);
+    --shadow-xl:   0 24px 56px rgba(14,40,65,0.18), 0 8px 16px rgba(14,40,65,0.06);
+    --r-sm:        4px;
+    --r:           6px;
+    --r-md:        8px;
+    --r-lg:        12px;
+
+    /* Typography stack - Arial primary (Modon brand), with fallbacks */
+    --font-sans:   Arial, 'Helvetica Neue', Helvetica, sans-serif;
+    --font-mono:   'SF Mono', Menlo, Consolas, monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    font-family: var(--font-sans);
+    background: var(--offwhite);
+    color: var(--charcoal);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  body { min-height: 100vh; overflow-x: hidden; }
+
+  /* =============================================================
+     LAYOUT PRIMITIVES
+     ============================================================= */
+  .app-shell { display: flex; flex-direction: column; min-height: 100vh; }
+  .container { max-width: 1400px; margin: 0 auto; padding: 0 24px; }
+
+  /* =============================================================
+     SPLASH SCREEN
+     ============================================================= */
+  .splash {
+    position: fixed; inset: 0; z-index: 100;
+    background: linear-gradient(135deg, #0E2841 0%, #081929 100%);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--white);
+    transition: opacity 0.6s ease-out, visibility 0.6s ease-out;
+  }
+  .splash.fade-out { opacity: 0; visibility: hidden; pointer-events: none; }
+  .splash-content { text-align: center; max-width: 600px; padding: 0 24px; }
+  .splash-bridge {
+    margin: 0 auto 36px;
+    width: 240px; height: 80px;
+    position: relative;
+  }
+  .splash-bridge .span {
+    position: absolute; left: 0; right: 0; top: 28px;
+    height: 2px; background: var(--teal);
+    transform-origin: center; transform: scaleX(0);
+    animation: spanGrow 1.2s 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+  .splash-bridge .pillar {
+    position: absolute; top: 30px;
+    width: 3px; height: 50px; background: var(--teal);
+    opacity: 0;
+    animation: pillarFade 0.4s 1.4s ease-out forwards;
+  }
+  .splash-bridge .pillar.left { left: 38px; }
+  .splash-bridge .pillar.right { right: 38px; }
+  .splash-wordmark {
+    font-size: 48px; font-weight: 900; letter-spacing: 0.16em;
+    opacity: 0;
+    animation: fadeInUp 0.6s 1.6s ease-out forwards;
+  }
+  .splash-tagline {
+    margin-top: 12px;
+    font-size: 13px; color: var(--tealLt);
+    letter-spacing: 0.08em;
+    opacity: 0;
+    animation: fadeInUp 0.5s 2.0s ease-out forwards;
+  }
+  @keyframes spanGrow { to { transform: scaleX(1); } }
+  @keyframes pillarFade { to { opacity: 1; } }
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* =============================================================
+     LOGIN SCREEN
+     ============================================================= */
+  .login {
+    position: fixed; inset: 0; z-index: 90;
+    background: var(--offwhite);
+    display: flex; align-items: stretch;
+    opacity: 0; visibility: hidden;
+    transition: opacity 0.4s ease-out, visibility 0.4s ease-out;
+  }
+  .login.show { opacity: 1; visibility: visible; }
+
+  .login-left {
+    flex: 0 0 42%;
+    background: linear-gradient(160deg, #0E2841 0%, #081929 70%, #0E2841 100%);
+    color: var(--white);
+    padding: 56px;
+    display: flex; flex-direction: column; justify-content: space-between;
+    position: relative; overflow: hidden;
+  }
+  .login-left::before {
+    content: ''; position: absolute; right: -120px; bottom: -120px;
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, rgba(91,158,142,0.15) 0%, transparent 70%);
+    border-radius: 50%;
+  }
+  .login-left::after {
+    content: ''; position: absolute; left: 56px; bottom: 200px;
+    width: 220px; height: 1.5px;
+    background: var(--teal);
+  }
+  .login-brand { display: flex; align-items: center; gap: 12px; position: relative; z-index: 2; }
+  .login-brand .mark {
+    width: 36px; height: 36px;
+    background: var(--white); border-radius: var(--r);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .login-brand .text { font-size: 18px; font-weight: 900; letter-spacing: 0.14em; }
+  .login-hero { position: relative; z-index: 2; }
+  .login-eyebrow {
+    font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--teal); font-weight: 700; margin-bottom: 16px;
+  }
+  .login-headline {
+    font-size: 36px; font-weight: 800; line-height: 1.15; margin-bottom: 16px;
+  }
+  .login-sub { font-size: 14px; color: var(--tealLt); line-height: 1.6; max-width: 380px; }
+  .login-meta { position: relative; z-index: 2; font-size: 11px; color: rgba(255,255,255,0.5); }
+  .login-meta b { color: var(--tealLt); display: block; margin-bottom: 4px; }
+
+  .login-right {
+    flex: 1;
+    padding: 56px 64px;
+    display: flex; flex-direction: column; justify-content: center;
+    overflow-y: auto;
+  }
+  .login-form-title {
+    font-size: 22px; font-weight: 800; color: var(--navy);
+    margin-bottom: 8px;
+  }
+  .login-form-sub {
+    font-size: 13px; color: var(--gray); margin-bottom: 32px;
+  }
+  .role-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; overflow-y: auto; max-height: 380px; padding-right: 4px; }
+  .role-search {
+    width: 100%; background: var(--white); border: 1.5px solid var(--grayLt);
+    border-radius: 6px; padding: 9px 12px 9px 36px;
+    font-size: 13px; font-family: inherit; color: var(--charcoal); margin-bottom: 14px;
+    background-image: url("data:image/svg+xml,%3Csvg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.3-4.3'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: 12px center;
+  }
+  .role-search:focus { outline: none; border-color: var(--teal); }
+  .role-card.hidden { display: none; }
+  .role-card {
+    background: var(--white);
+    border: 1.5px solid var(--grayLt);
+    border-radius: var(--r-md);
+    padding: 18px;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    text-align: left;
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .role-card:hover {
+    border-color: var(--teal);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+  }
+  .role-card .role-icon {
+    width: 32px; height: 32px;
+    border-radius: var(--r-sm);
+    background: var(--tealXLt);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--tealDk);
+    margin-bottom: 8px;
+  }
+  .role-card .role-name {
+    font-size: 13px; font-weight: 700; color: var(--navy);
+  }
+  .role-card .role-desc {
+    font-size: 11px; color: var(--gray); line-height: 1.4;
+  }
+  .login-divider {
+    margin: 24px 0;
+    text-align: center;
+    color: var(--gray);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    position: relative;
+  }
+  .login-divider::before, .login-divider::after {
+    content: ''; position: absolute; top: 50%;
+    width: calc(50% - 32px); height: 1px;
+    background: var(--grayLt);
+  }
+  .login-divider::before { left: 0; }
+  .login-divider::after { right: 0; }
+  .login-fields { display: flex; flex-direction: column; gap: 12px; }
+  .field-label {
+    font-size: 11px; font-weight: 700; color: var(--charcoal);
+    letter-spacing: 0.05em;
+  }
+  .field-input {
+    background: var(--white);
+    border: 1.5px solid var(--grayLt);
+    border-radius: var(--r);
+    padding: 10px 12px;
+    font-size: 13px;
+    font-family: inherit;
+    color: var(--charcoal);
+    transition: border-color 0.15s;
+  }
+  .field-input:focus { outline: none; border-color: var(--teal); }
+  .login-submit {
+    margin-top: 8px;
+    background: var(--navy);
+    color: var(--white);
+    border: none;
+    padding: 12px 16px;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    border-radius: var(--r);
+    cursor: pointer;
+    transition: background 0.15s;
+    font-family: inherit;
+  }
+  .login-submit:hover { background: var(--navyLt); }
+
+  /* =============================================================
+     APP SHELL (post-login)
+     ============================================================= */
+  .app { opacity: 0; visibility: hidden; transition: opacity 0.4s ease-out, visibility 0.4s ease-out; }
+  .app.show { opacity: 1; visibility: visible; }
+
+  /* Top bar */
+  .topbar {
+    background: var(--white);
+    border-bottom: 1px solid var(--grayLt);
+    height: 56px;
+    display: flex; align-items: center;
+    position: sticky; top: 0; z-index: 30;
+  }
+  .topbar-inner {
+    max-width: 1400px; margin: 0 auto;
+    padding: 0 24px; height: 100%;
+    display: flex; align-items: center; justify-content: space-between;
+    width: 100%;
+  }
+  .topbar-left { display: flex; align-items: center; gap: 32px; }
+  .topbar-brand {
+    display: flex; align-items: center; gap: 10px;
+    font-weight: 900; letter-spacing: 0.12em; font-size: 17px;
+    color: var(--navy);
+  }
+  .topbar-brand .mark {
+    width: 30px; height: 30px;
+    background: var(--navy);
+    border-radius: var(--r-sm);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .topbar-brand .meta {
+    font-size: 11px; color: var(--gray); font-weight: 400;
+    letter-spacing: 0; padding-left: 12px;
+    border-left: 1px solid var(--grayLt);
+  }
+  .topbar-right {
+    display: flex; align-items: center; gap: 16px;
+    font-size: 12px; color: var(--gray);
+  }
+  .topbar-status {
+    display: flex; align-items: center; gap: 8px;
+  }
+  .topbar-status .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 0 4px rgba(74,124,89,0.15);
+    animation: pulseDot 2s ease-in-out infinite;
+  }
+  @keyframes pulseDot {
+    0%, 100% { box-shadow: 0 0 0 4px rgba(74,124,89,0.15); }
+    50%      { box-shadow: 0 0 0 6px rgba(74,124,89,0.25); }
+  }
+  .topbar-divider { height: 18px; width: 1px; background: var(--grayLt); }
+  .topbar-bell {
+    width: 32px; height: 32px;
+    border-radius: var(--r);
+    border: 1px solid var(--grayLt);
+    background: var(--white);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    color: var(--charcoal);
+    position: relative;
+    transition: all 0.15s;
+  }
+  .topbar-bell:hover { background: var(--grayXLt); border-color: var(--gray); }
+  .topbar-bell .badge {
+    position: absolute; top: -3px; right: -3px;
+    background: var(--red); color: var(--white);
+    font-size: 9px; font-weight: 700;
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    border: 1.5px solid var(--white);
+  }
+  .topbar-user {
+    display: flex; align-items: center; gap: 8px;
+    color: var(--navy); font-weight: 600;
+  }
+  .topbar-user .avatar {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    background: var(--teal);
+    color: var(--white);
+    font-size: 11px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  /* Sidebar */
+  :root { --sidebar-w: 240px; }
+  .app.show { display: flex; align-items: stretch; }
+  .sidebar {
+    width: var(--sidebar-w); flex: 0 0 var(--sidebar-w);
+    background: var(--navy); color: var(--white);
+    display: flex; flex-direction: column;
+    position: sticky; top: 0; height: 100vh;
+    overflow: hidden;
+  }
+  .sidebar-brand {
+    height: 56px; padding: 0 18px;
+    display: flex; align-items: center; gap: 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.08); flex-shrink: 0;
+  }
+  .sidebar-brand .mark {
+    width: 28px; height: 28px; background: var(--white);
+    border-radius: 4px; display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .sidebar-brand .text { font-size: 15px; font-weight: 900; letter-spacing: 0.14em; }
+  .sidebar-brand .meta { font-size: 9px; color: rgba(255,255,255,0.4); margin-left: auto; letter-spacing: 0.1em; }
+  .sidebar-search { padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+  .sidebar-search input {
+    width: 100%; background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1); color: var(--white);
+    padding: 7px 10px 7px 30px; border-radius: 4px;
+    font-size: 12px; font-family: inherit;
+    background-image: url("data:image/svg+xml,%3Csvg width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23ffffff80' stroke-width='2' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.3-4.3'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: 10px center;
+  }
+  .sidebar-search input::placeholder { color: rgba(255,255,255,0.4); }
+  .sidebar-search input:focus { outline: none; border-color: var(--teal); background-color: rgba(255,255,255,0.1); }
+  .sidebar-nav { flex: 1; overflow-y: auto; padding: 8px 0; }
+  .sidebar-nav::-webkit-scrollbar { width: 4px; }
+  .sidebar-nav::-webkit-scrollbar-track { background: transparent; }
+  .sidebar-nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 2px; }
+  .sidebar-section-label {
+    padding: 14px 18px 6px; font-size: 9px; letter-spacing: 0.16em;
+    text-transform: uppercase; color: rgba(255,255,255,0.4); font-weight: 700;
+  }
+  .nav-item {
+    display: flex; align-items: center; gap: 11px;
+    padding: 8px 18px; color: rgba(255,255,255,0.75); cursor: pointer;
+    border: none; background: none; width: 100%; text-align: left;
+    font-family: inherit; font-size: 12.5px; font-weight: 500;
+    transition: background 0.12s, color 0.12s; position: relative;
+  }
+  .nav-item:hover { background: rgba(255,255,255,0.06); color: var(--white); }
+  .nav-item.active { background: rgba(91,158,142,0.18); color: var(--white); font-weight: 600; }
+  .nav-item.active::before {
+    content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+    width: 3px; background: var(--teal);
+  }
+  .nav-item .nav-icon { flex-shrink: 0; width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; }
+  .nav-item .nav-label { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .nav-item.hidden { display: none; }
+  .sidebar-footer { border-top: 1px solid rgba(255,255,255,0.08); padding: 12px 18px; flex-shrink: 0; }
+  .sidebar-user { display: flex; align-items: center; gap: 10px; color: var(--white); font-size: 12px; }
+  .sidebar-user .avatar {
+    width: 30px; height: 30px; border-radius: 50%;
+    background: var(--teal); color: var(--white); font-size: 10px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .sidebar-user .info { flex: 1; min-width: 0; }
+  .sidebar-user .info .name { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sidebar-user .info .role { font-size: 10px; color: rgba(255,255,255,0.5); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sidebar-logout {
+    margin-top: 10px; width: 100%;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+    color: rgba(255,255,255,0.7); font-family: inherit; font-size: 11px; font-weight: 600;
+    padding: 6px; border-radius: 4px; cursor: pointer;
+    transition: background 0.15s;
+  }
+  .sidebar-logout:hover { background: rgba(255,255,255,0.1); color: var(--white); }
+  .content-area { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  /* CSS aliases for new render functions (Tailwind-style names) */
+  .kpi-card { background: var(--white); border: 1px solid var(--grayLt); border-radius: 6px; padding: 16px 18px; }
+  .kpi-card .kpi-label { font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 700; color: var(--teal); margin-bottom: 4px; }
+  .kpi-card .kpi-value { font-size: 28px; font-weight: 800; color: var(--navy); line-height: 1.1; font-variant-numeric: tabular-nums; }
+  .kpi-card .kpi-sub { font-size: 11px; color: var(--gray); margin-top: 4px; }
+  .grid { display: grid; }
+  .grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
+  .grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
+  .grid-cols-4 { grid-template-columns: repeat(4, 1fr); }
+  .gap-3 { gap: 12px; }
+  .gap-4 { gap: 14px; }
+  .mb-6 { margin-bottom: 22px; }
+  .mb-8 { margin-bottom: 26px; }
+  .data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .data-table thead th { text-align: left; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 700; color: var(--gray); padding: 10px 14px; background: var(--grayXLt); border-bottom: 1px solid var(--grayLt); }
+  .data-table tbody td { padding: 11px 14px; border-bottom: 1px solid var(--grayLt); }
+  .data-table tbody tr { transition: background 0.12s; }
+  .data-table tbody tr.clickable { cursor: pointer; }
+  .data-table tbody tr:hover { background: var(--tealXLt); }
+  .data-table tbody tr:last-child td { border-bottom: none; }
+  .subtabs {
+    display: flex; gap: 4px; margin-bottom: 18px;
+    background: var(--grayXLt); padding: 4px; border-radius: 6px;
+    width: fit-content;
+  }
+  .subtab {
+    padding: 7px 14px; font-size: 12px; font-weight: 600;
+    color: var(--gray); cursor: pointer;
+    border: none; background: transparent; border-radius: 4px;
+    font-family: inherit; transition: all 0.15s;
+  }
+  .subtab.active { background: var(--white); color: var(--navy); box-shadow: 0 1px 2px rgba(0,0,0,0.06); }
+  .subtab:hover:not(.active) { color: var(--charcoal); }
+
+  /* Breadcrumb */
+  .breadcrumb {
+    background: var(--white);
+    border-bottom: 1px solid var(--grayLt);
+    padding: 10px 0;
+    font-size: 11px;
+    color: var(--gray);
+  }
+  .breadcrumb-inner {
+    max-width: 1400px; margin: 0 auto; padding: 0 24px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .breadcrumb a {
+    color: var(--gray);
+    text-decoration: none;
+    transition: color 0.15s;
+  }
+  .breadcrumb a:hover { color: var(--navy); text-decoration: underline; }
+  .breadcrumb .sep { color: var(--grayLt); margin: 0 2px; }
+  .breadcrumb .current { color: var(--navy); font-weight: 600; }
+
+  /* Main content */
+  .main {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 28px 24px 80px;
+  }
+  .page-fade { animation: pageFade 0.3s ease-out; }
+  @keyframes pageFade {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* =============================================================
+     COMPONENTS
+     ============================================================= */
+  /* Page header */
+  .page-header { margin-bottom: 24px; }
+  .page-header .eyebrow {
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--teal);
+    margin-bottom: 8px;
+  }
+  .page-header h1 {
+    font-size: 26px;
+    font-weight: 800;
+    color: var(--navy);
+    line-height: 1.15;
+    margin-bottom: 6px;
+  }
+  .page-header .subtitle { font-size: 13px; color: var(--gray); }
+  .page-header-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; }
+
+  /* Cards */
+  .card {
+    background: var(--white);
+    border: 1px solid var(--grayLt);
+    border-radius: var(--r);
+    box-shadow: var(--shadow-sm);
+  }
+  .card-pad { padding: 20px 22px; }
+  .card-header {
+    padding: 16px 22px;
+    border-bottom: 1px solid var(--grayLt);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .card-header h3 {
+    font-size: 14px; font-weight: 700; color: var(--navy);
+  }
+
+  /* KPI cards */
+  .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+  .kpi {
+    background: var(--white);
+    border: 1px solid var(--grayLt);
+    border-radius: var(--r);
+    padding: 18px 20px;
+    transition: all 0.2s;
+  }
+  .kpi.alert {
+    background: var(--redLt);
+    border-color: var(--red);
+  }
+  .kpi.alert .kpi-label { color: var(--red); }
+  .kpi.alert .kpi-value { color: var(--red); }
+  .kpi-label {
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--teal);
+    margin-bottom: 4px;
+  }
+  .kpi-value {
+    font-size: 32px; font-weight: 800; color: var(--navy);
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+  }
+  .kpi-sub { font-size: 11px; color: var(--gray); margin-top: 4px; }
+  .kpi-bar { height: 4px; background: var(--grayLt); border-radius: 2px; margin-top: 10px; overflow: hidden; }
+  .kpi-bar-fill { height: 100%; border-radius: 2px; transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
+
+  /* Status indicators */
+  .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+  .dot-red { background: var(--red); }
+  .dot-amber { background: var(--amber); }
+  .dot-green { background: var(--green); }
+
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 3px 9px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .chip-red { background: var(--redLt); color: var(--red); }
+  .chip-amber { background: var(--amberLt); color: var(--amber); }
+  .chip-green { background: var(--greenLt); color: var(--green); }
+  .chip-teal { background: var(--tealLt); color: var(--tealDk); }
+  .chip-navy { background: #E2E8EF; color: var(--navy); }
+  .chip-gray { background: var(--grayXLt); color: var(--gray); }
+
+  /* Project cards */
+  .project-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .project-card {
+    background: var(--white);
+    border: 1px solid var(--grayLt);
+    border-radius: var(--r);
+    padding: 18px;
+    cursor: pointer;
+    transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: var(--shadow-sm);
+  }
+  .project-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--teal);
+  }
+  .project-card-top {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    margin-bottom: 14px;
+  }
+  .project-card-entity {
+    font-size: 10px; font-weight: 700; color: var(--gray);
+    letter-spacing: 0.05em; text-transform: uppercase;
+  }
+  .project-card-name {
+    font-size: 15px; font-weight: 700; color: var(--navy);
+    margin-top: 4px;
+  }
+  .project-card-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+    margin-bottom: 12px;
+  }
+  .project-card-stat-label {
+    font-size: 10px; font-weight: 700; color: var(--gray);
+    letter-spacing: 0.05em; text-transform: uppercase;
+  }
+  .project-card-stat-value {
+    font-size: 14px; font-weight: 700; color: var(--navy);
+    margin-top: 2px;
+  }
+  .project-card-bar { height: 4px; background: var(--grayLt); border-radius: 2px; margin-bottom: 12px; overflow: hidden; }
+  .project-card-bar-fill { height: 100%; border-radius: 2px; transition: width 0.5s; }
+  .project-card-bottom {
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 11px;
+  }
+  .project-card-handover { color: var(--gray); }
+  .project-card-handover b { color: var(--navy); }
+  .project-card-pending { color: var(--teal); font-weight: 700; }
+
+  /* Bars */
+  .bar-bg { background: var(--grayLt); border-radius: 3px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 3px; }
+
+  /* Buttons */
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 14px;
+    font-size: 12px; font-weight: 700;
+    border-radius: var(--r);
+    cursor: pointer;
+    border: 1px solid transparent;
+    font-family: inherit;
+    transition: all 0.15s;
+  }
+  .btn-primary {
+    background: var(--navy); color: var(--white); border-color: var(--navy);
+  }
+  .btn-primary:hover { background: var(--navyLt); }
+  .btn-teal { background: var(--teal); color: var(--white); border-color: var(--teal); }
+  .btn-teal:hover { background: var(--tealDk); }
+  .btn-ghost {
+    background: transparent; color: var(--charcoal); border-color: var(--grayLt);
+  }
+  .btn-ghost:hover { background: var(--grayXLt); border-color: var(--gray); }
+
+  /* Tables */
+  .table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .table thead th {
+    text-align: left;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--gray);
+    padding: 10px 14px;
+    background: var(--grayXLt);
+    border-bottom: 1px solid var(--grayLt);
+  }
+  .table tbody td {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--grayLt);
+  }
+  .table tbody tr {
+    transition: background 0.12s;
+  }
+  .table tbody tr:hover { background: var(--tealXLt); }
+  .table tbody tr.clickable { cursor: pointer; }
+  .table tbody tr:last-child td { border-bottom: none; }
+
+  /* Detail screens */
+  .back-link {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12px; color: var(--gray); font-weight: 600;
+    text-decoration: none; margin-bottom: 12px;
+    cursor: pointer;
+    background: none; border: none;
+    font-family: inherit;
+  }
+  .back-link:hover { color: var(--navy); }
+
+  /* Hero panel - the BRIDG8 moment */
+  .hero-panel {
+    background: var(--white);
+    border: 2px solid var(--teal);
+    border-radius: var(--r-md);
+    margin-bottom: 24px;
+    overflow: hidden;
+    box-shadow: 0 8px 24px rgba(91,158,142,0.12);
+  }
+  .hero-panel-header {
+    background: linear-gradient(135deg, var(--tealXLt) 0%, var(--tealLt) 100%);
+    padding: 18px 22px;
+    border-bottom: 1px solid var(--grayLt);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .hero-panel-eyebrow {
+    font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
+    font-weight: 800; color: var(--tealDk);
+  }
+  .hero-panel-title {
+    font-size: 18px; font-weight: 800; color: var(--navy);
+    margin-top: 4px;
+  }
+  .hero-panel-sub { font-size: 12px; color: var(--charcoal); margin-top: 4px; }
+  .hero-panel-counter { text-align: right; }
+  .hero-panel-counter .num {
+    font-size: 32px; font-weight: 800; color: var(--navy); line-height: 1;
+  }
+  .hero-panel-counter .lbl {
+    font-size: 10px; letter-spacing: 0.1em; font-weight: 700; color: var(--gray);
+    margin-top: 2px;
+  }
+
+  .pending-row {
+    display: grid;
+    grid-template-columns: 48px 140px 1fr 240px 64px;
+    gap: 14px;
+    padding: 14px 22px;
+    align-items: center;
+    border-bottom: 1px solid var(--grayLt);
+    cursor: pointer;
+    transition: background 0.12s;
+  }
+  .pending-row:last-child { border-bottom: none; }
+  .pending-row:hover { background: var(--tealXLt); }
+  .pending-icon {
+    width: 36px; height: 36px;
+    border-radius: var(--r);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .pending-dept {
+    font-size: 10px; font-weight: 800; letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .pending-owner { font-size: 11px; color: var(--gray); margin-top: 2px; }
+  .pending-title { font-size: 13px; font-weight: 600; color: var(--navy); }
+  .pending-meta { font-size: 11px; color: var(--gray); margin-top: 2px; }
+  .pending-impact { font-size: 11px; color: var(--gray); }
+  .pending-days { font-size: 18px; font-weight: 800; text-align: right; }
+  .pending-days-lbl {
+    font-size: 9px; font-weight: 700; letter-spacing: 0.08em;
+    color: var(--gray); text-align: right; margin-top: 2px;
+  }
+
+  /* Notification toast */
+  .toast-container {
+    position: fixed; top: 70px; right: 24px;
+    z-index: 50;
+    display: flex; flex-direction: column; gap: 8px;
+    pointer-events: none;
+  }
+  .toast {
+    background: var(--white);
+    border: 1px solid var(--grayLt);
+    border-left: 3px solid var(--teal);
+    border-radius: var(--r);
+    box-shadow: var(--shadow-lg);
+    padding: 14px 16px;
+    width: 340px;
+    pointer-events: auto;
+    animation: toastIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .toast.amber { border-left-color: var(--amber); }
+  .toast.red   { border-left-color: var(--red); }
+  .toast-eyebrow {
+    font-size: 9px; font-weight: 800; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--teal);
+    margin-bottom: 4px;
+  }
+  .toast.amber .toast-eyebrow { color: var(--amber); }
+  .toast.red .toast-eyebrow { color: var(--red); }
+  .toast-title { font-size: 13px; font-weight: 700; color: var(--navy); margin-bottom: 4px; }
+  .toast-body { font-size: 11px; color: var(--gray); line-height: 1.4; }
+  @keyframes toastIn {
+    from { transform: translateX(20px); opacity: 0; }
+    to   { transform: translateX(0); opacity: 1; }
+  }
+  @keyframes toastOut {
+    from { transform: translateX(0); opacity: 1; }
+    to   { transform: translateX(20px); opacity: 0; }
+  }
+  .toast.fade-out { animation: toastOut 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+
+  /* Notifications panel */
+  .notif-panel {
+    position: fixed;
+    top: 56px; right: 24px;
+    width: 380px;
+    background: var(--white);
+    border: 1px solid var(--grayLt);
+    border-radius: var(--r-md);
+    box-shadow: var(--shadow-xl);
+    z-index: 40;
+    opacity: 0; visibility: hidden;
+    transform: translateY(-8px);
+    transition: opacity 0.2s, transform 0.2s, visibility 0.2s;
+    max-height: 480px; overflow: hidden;
+    display: flex; flex-direction: column;
+  }
+  .notif-panel.show {
+    opacity: 1; visibility: visible; transform: translateY(0);
+  }
+  .notif-header {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--grayLt);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .notif-header h4 { font-size: 13px; font-weight: 700; color: var(--navy); }
+  .notif-clear {
+    font-size: 11px; color: var(--teal); font-weight: 600;
+    background: none; border: none; cursor: pointer; font-family: inherit;
+  }
+  .notif-body { overflow-y: auto; flex: 1; }
+  .notif-item {
+    padding: 12px 18px;
+    border-bottom: 1px solid var(--grayLt);
+    display: grid;
+    grid-template-columns: 8px 1fr;
+    gap: 10px;
+    align-items: flex-start;
+  }
+  .notif-item:last-child { border-bottom: none; }
+  .notif-item .dot { margin-top: 6px; }
+  .notif-eyebrow {
+    font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase;
+    font-weight: 700; color: var(--gray); margin-bottom: 2px;
+  }
+  .notif-title { font-size: 12px; font-weight: 600; color: var(--navy); margin-bottom: 2px; }
+  .notif-time { font-size: 10px; color: var(--gray); }
+
+  /* Modal */
+  .modal-backdrop {
+    position: fixed; inset: 0;
+    background: rgba(14,40,65,0.55);
+    backdrop-filter: blur(2px);
+    z-index: 60;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    animation: backdropIn 0.2s ease-out;
+  }
+  @keyframes backdropIn { from { opacity: 0; } to { opacity: 1; } }
+  .modal-body {
+    background: var(--white);
+    border-radius: var(--r-md);
+    box-shadow: var(--shadow-xl);
+    max-width: 720px; width: 100%; max-height: 85vh;
+    overflow: hidden;
+    display: flex; flex-direction: column;
+    animation: modalIn 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  @keyframes modalIn {
+    from { opacity: 0; transform: translateY(12px) scale(0.98); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .modal-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--grayLt);
+    display: flex; align-items: flex-start; justify-content: space-between;
+    gap: 16px;
+  }
+  .modal-close {
+    background: none; border: none;
+    width: 32px; height: 32px;
+    border-radius: var(--r);
+    cursor: pointer;
+    color: var(--gray);
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+  }
+  .modal-close:hover { background: var(--grayXLt); color: var(--charcoal); }
+  .modal-content { padding: 22px 24px; overflow-y: auto; flex: 1; }
+  .modal-footer {
+    padding: 14px 24px;
+    border-top: 1px solid var(--grayLt);
+    background: var(--grayXLt);
+    display: flex; justify-content: flex-end; gap: 8px;
+  }
+
+  /* Eyebrow / labels */
+  .eyebrow {
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--teal);
+  }
+
+  /* Detail layouts */
+  .detail-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+  .stat-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; padding: 16px 0; }
+  .stat-cell .lbl {
+    font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
+    font-weight: 700; color: var(--gray); margin-bottom: 4px;
+  }
+  .stat-cell .val { font-size: 16px; font-weight: 700; color: var(--navy); }
+  .stat-cell.alert .val { color: var(--red); }
+
+  /* Timeline */
+  .timeline { position: relative; padding-left: 22px; }
+  .timeline::before {
+    content: ''; position: absolute;
+    left: 7px; top: 4px; bottom: 4px;
+    width: 1.5px; background: var(--grayLt);
+  }
+  .timeline-item { position: relative; padding-bottom: 18px; }
+  .timeline-item:last-child { padding-bottom: 0; }
+  .timeline-item::before {
+    content: ''; position: absolute;
+    left: -22px; top: 4px;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: var(--white);
+    border: 2px solid var(--teal);
+  }
+  .timeline-item.alert::before { border-color: var(--red); background: var(--redLt); }
+  .timeline-item.future::before { border-color: var(--grayLt); }
+  /* Replay animation states */
+  .timeline.replaying .timeline-item { opacity: 0.15; transition: opacity 0.4s; }
+  .timeline.replaying .timeline-item.replay-active {
+    opacity: 1;
+    animation: replayPulse 0.7s cubic-bezier(0.4,0,0.2,1);
+  }
+  .timeline.replaying .timeline-item.replay-active::before {
+    transform: scale(1.4);
+    box-shadow: 0 0 0 6px rgba(91,158,142,0.25);
+    transition: all 0.3s;
+  }
+  .timeline.replaying .timeline-item.replay-active.alert::before {
+    box-shadow: 0 0 0 6px rgba(180,69,62,0.25);
+  }
+  .timeline.replaying .timeline-item.replay-done { opacity: 0.85; }
+  @keyframes replayPulse {
+    0%   { transform: translateX(-8px); opacity: 0; }
+    60%  { transform: translateX(2px); opacity: 1; }
+    100% { transform: translateX(0); opacity: 1; }
+  }
+  /* Replay banner */
+  .replay-banner {
+    background: linear-gradient(135deg, var(--navy) 0%, var(--navyLt) 100%);
+    color: var(--white);
+    padding: 12px 18px;
+    border-radius: 6px;
+    margin-bottom: 14px;
+    display: flex; align-items: center; justify-content: space-between;
+    animation: bannerSlideIn 0.3s cubic-bezier(0.4,0,0.2,1);
+  }
+  .replay-banner-text { font-size: 12px; }
+  .replay-banner-text b { font-size: 13px; display: block; margin-bottom: 2px; }
+  .replay-day-counter {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.08em;
+    background: rgba(255,255,255,0.15); padding: 6px 12px;
+    border-radius: 4px; font-variant-numeric: tabular-nums;
+  }
+  @keyframes bannerSlideIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ============ TOUR / WALKTHROUGH OVERLAY ============ */
+  .tour-overlay {
+    position: fixed; inset: 0; z-index: 200;
+    background: rgba(8, 25, 41, 0.55);
+    backdrop-filter: blur(2px);
+    pointer-events: auto;
+    animation: tourFadeIn 0.3s ease-out;
+  }
+  @keyframes tourFadeIn { from { opacity: 0; } to { opacity: 1; } }
+  .tour-spotlight {
+    position: absolute;
+    border-radius: 8px;
+    box-shadow: 0 0 0 9999px rgba(8, 25, 41, 0.62);
+    border: 2px solid var(--teal);
+    pointer-events: none;
+    transition: top 0.4s cubic-bezier(0.4,0,0.2,1), left 0.4s cubic-bezier(0.4,0,0.2,1),
+                width 0.4s cubic-bezier(0.4,0,0.2,1), height 0.4s cubic-bezier(0.4,0,0.2,1);
+    animation: spotlightPulse 2s ease-in-out infinite;
+  }
+  @keyframes spotlightPulse {
+    0%, 100% { box-shadow: 0 0 0 9999px rgba(8, 25, 41, 0.62), 0 0 0 0 rgba(91,158,142,0.4); }
+    50%      { box-shadow: 0 0 0 9999px rgba(8, 25, 41, 0.62), 0 0 0 12px rgba(91,158,142,0); }
+  }
+  .tour-tooltip {
+    position: absolute;
+    background: var(--white);
+    border-radius: 8px;
+    box-shadow: 0 24px 56px rgba(0,0,0,0.35);
+    padding: 18px 20px;
+    width: 320px;
+    pointer-events: auto;
+    transition: top 0.4s cubic-bezier(0.4,0,0.2,1), left 0.4s cubic-bezier(0.4,0,0.2,1);
+  }
+  .tour-tooltip-eyebrow {
+    font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase;
+    font-weight: 800; color: var(--teal); margin-bottom: 6px;
+  }
+  .tour-tooltip-title { font-size: 15px; font-weight: 800; color: var(--navy); margin-bottom: 8px; line-height: 1.2; }
+  .tour-tooltip-body { font-size: 12px; color: var(--charcoal); line-height: 1.55; margin-bottom: 14px; }
+  .tour-tooltip-footer {
+    display: flex; justify-content: space-between; align-items: center;
+    padding-top: 12px; border-top: 1px solid var(--grayLt);
+  }
+  .tour-progress { display: flex; gap: 4px; }
+  .tour-progress-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--grayLt);
+  }
+  .tour-progress-dot.active { background: var(--teal); width: 18px; border-radius: 3px; transition: width 0.3s; }
+  .tour-actions { display: flex; gap: 6px; }
+  .tour-btn {
+    padding: 6px 12px; font-size: 11px; font-weight: 700;
+    border-radius: 4px; cursor: pointer; font-family: inherit;
+    border: 1px solid transparent; transition: all 0.15s;
+  }
+  .tour-btn-skip { background: transparent; color: var(--gray); }
+  .tour-btn-skip:hover { color: var(--charcoal); }
+  .tour-btn-next { background: var(--navy); color: var(--white); border-color: var(--navy); }
+  .tour-btn-next:hover { background: var(--navyLt); }
+  .tour-step-label { font-size: 10px; color: var(--gray); }
+  /* Tour trigger button in topbar */
+  .tour-trigger {
+    background: var(--tealLt); color: var(--tealDk);
+    border: 1px solid var(--teal); padding: 5px 10px;
+    border-radius: 4px; font-size: 11px; font-weight: 700;
+    cursor: pointer; font-family: inherit; transition: all 0.15s;
+    display: inline-flex; align-items: center; gap: 5px;
+  }
+  .tour-trigger:hover { background: var(--teal); color: var(--white); }
+
+  /* ============ LANGUAGE TOGGLE + RTL ============ */
+  .lang-toggle {
+    margin-top: 8px;
+    display: flex;
+    background: rgba(255,255,255,0.05);
+    border-radius: 4px;
+    padding: 2px;
+    width: 100%;
+  }
+  .lang-toggle button {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: rgba(255,255,255,0.6);
+    font-family: inherit;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    padding: 5px 6px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .lang-toggle button.active { background: var(--teal); color: var(--white); }
+  .lang-toggle button:hover:not(.active) { color: var(--white); }
+  /* RTL adjustments */
+  body[dir="rtl"] .sidebar { border-left: 1px solid rgba(255,255,255,0.08); }
+  body[dir="rtl"] .nav-item.active::before { left: auto; right: 0; }
+  body[dir="rtl"] .timeline { padding-left: 0; padding-right: 22px; }
+  body[dir="rtl"] .timeline::before { left: auto; right: 7px; }
+  body[dir="rtl"] .timeline-item::before { left: auto; right: -22px; }
+  body[dir="rtl"] .topbar-breadcrumb a, body[dir="rtl"] .breadcrumb-inner a { direction: rtl; }
+  body[dir="rtl"] .back-link svg { transform: scaleX(-1); }
+  body[dir="rtl"] .page-fade { font-family: 'Tahoma', 'Geeza Pro', 'Arabic UI Display', Arial, sans-serif; }
+  body[dir="rtl"] .text-right { text-align: left; }
+  body[dir="rtl"] .toast-container { right: auto; left: 24px; }
+  body[dir="rtl"] .replay-banner-text { text-align: right; }
+
+  /* ============ MOBILE RESPONSIVE ============ */
+  .mobile-menu-btn {
+    display: none;
+    background: var(--white); border: 1px solid var(--grayLt);
+    width: 36px; height: 36px; border-radius: 6px;
+    align-items: center; justify-content: center;
+    cursor: pointer; color: var(--charcoal); margin-right: 12px;
+  }
+  @media (max-width: 768px) {
+    .mobile-menu-btn { display: inline-flex; }
+    .sidebar {
+      position: fixed; left: 0; top: 0;
+      transform: translateX(-100%);
+      transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+      z-index: 80;
+      box-shadow: 4px 0 24px rgba(0,0,0,0.15);
+    }
+    .sidebar.mobile-open { transform: translateX(0); }
+    body[dir="rtl"] .sidebar { left: auto; right: 0; transform: translateX(100%); }
+    body[dir="rtl"] .sidebar.mobile-open { transform: translateX(0); }
+    .app.show { display: block; }
+    .content-area { width: 100%; }
+    .topbar { padding: 0 16px; }
+    .main { padding: 16px 16px 60px; }
+    .topbar-breadcrumb { font-size: 11px; }
+    .tour-trigger { display: none; }
+    .topbar-divider { display: none; }
+    .kpi-grid, .grid.grid-cols-4 { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .grid.grid-cols-3, .project-grid { grid-template-columns: 1fr; gap: 12px; }
+    .grid.grid-cols-2, .grid-2 { grid-template-columns: 1fr; gap: 12px; }
+    .page-header h1 { font-size: 20px; }
+    .kpi-value { font-size: 22px; }
+    .pending-row { grid-template-columns: 36px 1fr; gap: 10px; padding: 12px 16px; }
+    .pending-row > div:nth-child(2),
+    .pending-row > div:nth-child(4),
+    .pending-row > div:nth-child(5) { display: none; }
+    .data-table, .table { font-size: 11px; }
+    .data-table th, .data-table td { padding: 8px 10px; }
+    .login { flex-direction: column; }
+    .login-left { flex: 0 0 auto; padding: 32px 24px; }
+    .login-right { padding: 32px 24px; }
+    .role-grid { grid-template-columns: 1fr; max-height: 280px; }
+    .modal-body { max-width: 100%; margin: 0 12px; }
+    .toast { width: calc(100vw - 32px); }
+    .detail-grid { grid-template-columns: 1fr; }
+    .hero-panel-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+  }
+  /* Mobile-only: backdrop when sidebar is open */
+  .mobile-backdrop {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 70;
+  }
+  @media (max-width: 768px) {
+    .mobile-backdrop.show { display: block; }
+  }
+
+  /* ============ WHAT-IF SIMULATOR MODAL ============ */
+  .whatif-backdrop {
+    position: fixed; inset: 0; z-index: 60;
+    background: rgba(14,40,65,0.55); backdrop-filter: blur(2px);
+    display: flex; align-items: center; justify-content: center; padding: 24px;
+    animation: tourFadeIn 0.2s ease-out;
+  }
+  .whatif-modal {
+    background: var(--white); border-radius: 8px;
+    box-shadow: 0 24px 56px rgba(14,40,65,0.18);
+    width: 540px; max-width: 100%;
+    max-height: 85vh; overflow: hidden;
+    display: flex; flex-direction: column;
+    animation: bannerSlideIn 0.25s cubic-bezier(0.4,0,0.2,1);
+  }
+  .whatif-header {
+    padding: 18px 24px; border-bottom: 1px solid var(--grayLt);
+    display: flex; align-items: flex-start; justify-content: space-between;
+  }
+  .whatif-eyebrow {
+    font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase;
+    font-weight: 800; color: var(--teal); margin-bottom: 4px;
+  }
+  .whatif-title { font-size: 17px; font-weight: 800; color: var(--navy); }
+  .whatif-close {
+    background: none; border: none;
+    width: 30px; height: 30px; border-radius: 4px; cursor: pointer;
+    color: var(--gray); display: flex; align-items: center; justify-content: center;
+  }
+  .whatif-close:hover { background: var(--grayXLt); color: var(--charcoal); }
+  .whatif-body { padding: 20px 24px; overflow-y: auto; flex: 1; }
+  .whatif-slider-row {
+    display: flex; align-items: center; gap: 16px;
+    padding: 14px; background: var(--grayXLt); border-radius: 6px;
+    margin-bottom: 16px;
+  }
+  .whatif-slider-label { flex: 1; }
+  .whatif-slider-label .lbl { font-size: 11px; color: var(--gray); margin-bottom: 2px; }
+  .whatif-slider-label .val { font-size: 18px; font-weight: 800; color: var(--navy); font-variant-numeric: tabular-nums; }
+  .whatif-slider {
+    flex: 2;
+    -webkit-appearance: none; appearance: none;
+    height: 6px; background: var(--grayLt); border-radius: 3px;
+    outline: none;
+  }
+  .whatif-slider::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 18px; height: 18px; background: var(--teal);
+    border-radius: 50%; cursor: pointer;
+    border: 2px solid var(--white);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  }
+  .whatif-impact { margin-top: 8px; }
+  .whatif-impact-card {
+    padding: 14px 16px; border-radius: 6px;
+    background: var(--tealXLt); border-left: 3px solid var(--teal);
+    margin-bottom: 10px;
+  }
+  .whatif-impact-card.amber { background: var(--amberLt); border-left-color: var(--amber); }
+  .whatif-impact-card.red { background: var(--redLt); border-left-color: var(--red); }
+  .whatif-impact-eyebrow {
+    font-size: 9px; font-weight: 800; letter-spacing: 0.1em;
+    color: var(--tealDk); text-transform: uppercase; margin-bottom: 4px;
+  }
+  .whatif-impact-card.amber .whatif-impact-eyebrow { color: var(--amber); }
+  .whatif-impact-card.red .whatif-impact-eyebrow { color: var(--red); }
+  .whatif-impact-title { font-size: 13px; font-weight: 700; color: var(--navy); margin-bottom: 4px; }
+  .whatif-impact-body { font-size: 12px; color: var(--charcoal); line-height: 1.5; }
+  .whatif-presets {
+    display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap;
+  }
+  .whatif-preset {
+    background: var(--white); border: 1px solid var(--grayLt);
+    padding: 6px 12px; border-radius: 4px;
+    font-size: 11px; font-weight: 600; cursor: pointer;
+    font-family: inherit; transition: all 0.15s;
+  }
+  .whatif-preset:hover { background: var(--tealXLt); border-color: var(--teal); }
+  .whatif-preset.active { background: var(--navy); color: var(--white); border-color: var(--navy); }
+
+  /* ============ ONBOARDING WIZARD ============ */
+  .onboard-backdrop {
+    position: fixed; inset: 0; z-index: 110;
+    background: rgba(8, 25, 41, 0.85); backdrop-filter: blur(4px);
+    display: flex; align-items: center; justify-content: center; padding: 24px;
+    animation: tourFadeIn 0.4s ease-out;
+  }
+  .onboard-modal {
+    background: var(--white); border-radius: 12px;
+    box-shadow: 0 32px 64px rgba(0,0,0,0.4);
+    width: 540px; max-width: 100%;
+    overflow: hidden; position: relative;
+    animation: bannerSlideIn 0.5s cubic-bezier(0.4,0,0.2,1);
+  }
+  .onboard-hero {
+    background: linear-gradient(135deg, var(--navy) 0%, var(--navyLt) 100%);
+    color: var(--white);
+    padding: 28px 32px;
+    position: relative; overflow: hidden;
+  }
+  .onboard-hero::after {
+    content: ''; position: absolute;
+    right: -60px; bottom: -60px;
+    width: 200px; height: 200px;
+    background: radial-gradient(circle, rgba(91,158,142,0.18) 0%, transparent 70%);
+    border-radius: 50%;
+  }
+  .onboard-hero-eyebrow {
+    font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--teal); font-weight: 800; margin-bottom: 8px;
+  }
+  .onboard-hero-title { font-size: 24px; font-weight: 800; line-height: 1.2; margin-bottom: 6px; }
+  .onboard-hero-sub { font-size: 13px; color: var(--tealLt); }
+  .onboard-body { padding: 24px 32px; }
+  .onboard-step {
+    display: flex; align-items: flex-start; gap: 14px;
+    padding: 14px 0; border-bottom: 1px solid var(--grayLt);
+  }
+  .onboard-step:last-child { border-bottom: none; }
+  .onboard-step-num {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--tealLt); color: var(--tealDk);
+    font-size: 12px; font-weight: 800;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .onboard-step-text { flex: 1; }
+  .onboard-step-title { font-size: 13px; font-weight: 700; color: var(--navy); margin-bottom: 2px; }
+  .onboard-step-body { font-size: 12px; color: var(--gray); line-height: 1.5; }
+  .onboard-actions {
+    padding: 16px 32px; border-top: 1px solid var(--grayLt);
+    background: var(--grayXLt);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .onboard-skip {
+    background: none; border: none;
+    font-family: inherit; font-size: 12px; color: var(--gray);
+    cursor: pointer; font-weight: 600;
+  }
+  .onboard-skip:hover { color: var(--charcoal); }
+  .onboard-cta {
+    background: var(--navy); color: var(--white); border: none;
+    padding: 10px 22px; border-radius: 6px;
+    font-family: inherit; font-size: 13px; font-weight: 700;
+    cursor: pointer; transition: background 0.15s;
+  }
+  .onboard-cta:hover { background: var(--navyLt); }
+  .timeline-time {
+    font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase;
+    font-weight: 700; color: var(--gray);
+  }
+  .timeline-title { font-size: 13px; font-weight: 700; color: var(--navy); margin-top: 2px; }
+  .timeline-body { font-size: 12px; color: var(--charcoal); margin-top: 3px; line-height: 1.5; }
+
+  /* Section headers */
+  .section-title {
+    font-size: 14px; font-weight: 700; color: var(--navy);
+    margin-bottom: 10px;
+  }
+
+  /* Helpers */
+  .text-right { text-align: right; }
+  .text-center { text-align: center; }
+  .mb-12 { margin-bottom: 12px; }
+  .mb-16 { margin-bottom: 16px; }
+  .mb-20 { margin-bottom: 20px; }
+  .mb-24 { margin-bottom: 24px; }
+  .mt-12 { margin-top: 12px; }
+  .mt-16 { margin-top: 16px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .flex { display: flex; }
+  .flex-between { display: flex; justify-content: space-between; align-items: center; }
+  .gap-3 { gap: 12px; }
+  .gap-2 { gap: 8px; }
+</style>
+</head>
+
+<body>
+
+<!-- =============================================================
+     SPLASH
+     ============================================================= -->
+<div id="splash" class="splash">
+  <div class="splash-content">
+    <div class="splash-bridge">
+      <div class="span"></div>
+      <div class="pillar left"></div>
+      <div class="pillar right"></div>
+    </div>
+    <div class="splash-wordmark">BRIDG8</div>
+    <div class="splash-tagline">BRIDGING DEPARTMENTS TO PROJECT DELIVERY</div>
+  </div>
+</div>
+
+<!-- =============================================================
+     LOGIN
+     ============================================================= -->
+<div id="login" class="login">
+  <div class="login-left">
+    <div class="login-brand">
+      <div class="mark">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <rect x="2" y="12" width="20" height="1.5" fill="#0E2841"/>
+          <rect x="4" y="10" width="1.2" height="8" fill="#0E2841"/>
+          <rect x="18.8" y="10" width="1.2" height="8" fill="#0E2841"/>
+        </svg>
+      </div>
+      <div class="text">BRIDG8</div>
+    </div>
+
+    <div class="login-hero">
+      <div class="login-eyebrow">MODON INNOVATION PLATFORM</div>
+      <div class="login-headline">Project Delivery<br>can't deliver alone.</div>
+      <div class="login-sub">A transparency platform that turns scattered information into decisions — so Delivery spends time delivering, not chasing.</div>
+    </div>
+
+    <div class="login-meta">
+      <b>ID8 Innovation Challenge · 2026</b>
+      Modon Real Estate · Group Strategy &amp; Transformation
+    </div>
+  </div>
+
+  <div class="login-right">
+    <div class="login-form-title">Welcome to BRIDG8</div>
+    <div class="login-form-sub">Sign in to access your project portfolio.</div>
+
+    <div class="login-fields">
+      <div>
+        <div class="field-label">Email</div>
+        <input class="field-input" type="email" value="user@modon.ae" id="login-email" style="width: 100%;">
+      </div>
+      <div>
+        <div class="field-label">Password</div>
+        <input class="field-input" type="password" value="••••••••" id="login-password" style="width: 100%;">
+      </div>
+      <button class="login-submit" onclick="completeLogin()">Sign in</button>
+    </div>
+
+    <div class="login-divider">OR ENTER AS DEPARTMENT</div>
+
+    <input class="role-search" type="text" placeholder="Search departments…" id="role-search" oninput="filterRoles()">
+    <div class="role-grid" id="role-grid">
+      <!-- populated by JS -->
+    </div>
+
+    <div style="margin-top: 16px; font-size: 10px; color: var(--gray); text-align: center;">
+      Demo prototype · simulated data · no real Modon information stored or transmitted
+    </div>
+  </div>
+</div>
+
+<!-- =============================================================
+     APP
+     ============================================================= -->
+<div id="app" class="app">
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="mark">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+          <rect x="2" y="12" width="20" height="1.5" fill="#5B9E8E"/>
+          <rect x="4" y="10" width="1.2" height="8" fill="#5B9E8E"/>
+          <rect x="18.8" y="10" width="1.2" height="8" fill="#5B9E8E"/>
+        </svg>
+      </div>
+      <div class="text">BRIDG8</div>
+      <div class="meta">v1</div>
+    </div>
+    <div class="sidebar-search">
+      <input type="text" placeholder="Search…" id="sidebar-search" oninput="filterSidebar()">
+    </div>
+    <nav class="sidebar-nav" id="sidebar-nav"></nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="avatar" id="sidebar-avatar">U</div>
+        <div class="info">
+          <div class="name" id="sidebar-username">User</div>
+          <div class="role" id="sidebar-userrole">Department</div>
+        </div>
+      </div>
+      <button class="sidebar-logout" onclick="logout()">Sign out</button>
+    </div>
+  </aside>
+
+  <div class="content-area">
+    <header class="topbar">
+      <div class="topbar-inner" style="max-width: none; padding: 0 28px;">
+        <button class="mobile-menu-btn" onclick="toggleMobileSidebar()" title="Menu">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+        <div class="breadcrumb-inner" id="breadcrumb" style="font-size: 12px; color: var(--gray);"></div>
+        <div class="topbar-right">
+          <div class="topbar-status">
+            <span class="dot"></span>
+            <span>Live</span>
+          </div>
+          <div class="topbar-divider"></div>
+          <button class="tour-trigger" onclick="startTour()" title="Take a guided tour">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+            Take the tour
+          </button>
+          <div class="topbar-divider"></div>
+          <button class="topbar-bell" onclick="toggleNotifPanel()" id="notif-bell">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0112 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 003.4 0"/></svg>
+            <span class="badge" id="notif-badge">3</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="main" id="main">
+      <!-- screens render here -->
+    </main>
+  </div>
+</div>
+
+<div id="mobile-backdrop" class="mobile-backdrop" onclick="toggleMobileSidebar()"></div>
+<div class="toast-container" id="toast-container"></div>
+<div id="notif-panel" class="notif-panel">
+  <div class="notif-header">
+    <h4>Notifications</h4>
+    <button class="notif-clear" onclick="clearNotifs()">Clear all</button>
+  </div>
+  <div class="notif-body" id="notif-body"></div>
+</div>
+<div id="modal-root"></div>
+
+<script>
+/* =============================================================
+   ICONS (inline SVG)
+   ============================================================= */
+const ICONS = {
+  // Department icons
+  ceo:        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 9h.01M15 9h.01M9 13h.01M15 13h.01M9 17h.01M15 17h.01"/></svg>',
+  delivery:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>',
+  design:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="2"/><path d="M15.7 21.3a1 1 0 01-1.4 0l-1.6-1.6a1 1 0 010-1.4l5.6-5.6a1 1 0 011.4 0l1.6 1.6a1 1 0 010 1.4z"/></svg>',
+  development:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M5 21V8l7-4 7 4v13M9 9h6M9 13h6M9 17h6"/></svg>',
+  finance:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>',
+  legal:      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10M12 3v18M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></svg>',
+  marketing:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11v3a1 1 0 001 1h3l3.3 5.7a1 1 0 001.7-.8V5a1 1 0 00-1.7-.7L7 10H4a1 1 0 00-1 1z"/><path d="M16 8a5 5 0 010 8"/></svg>',
+  procurement:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 8a2 2 0 00-1-1.7l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.7l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><path d="M3.3 7l8.7 5 8.7-5M12 22V12"/></svg>',
+  stakeholder:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>',
+  visioning:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>',
+  wallet: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12V7H5a2 2 0 010-4h14v4"/><path d="M3 5v14a2 2 0 002 2h16v-5"/><path d="M18 12a2 2 0 000 4h4v-4Z"/></svg>',
+  scale: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10M12 3v18M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></svg>',
+  package: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16Z"/><path d="m3.3 7 8.7 5 8.7-5M12 22V12"/></svg>',
+  pen: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="2"/><path d="M15.7 21.3a1 1 0 01-1.4 0l-1.6-1.6a1 1 0 010-1.4l5.6-5.6a1 1 0 011.4 0l1.6 1.6a1 1 0 010 1.4z"/></svg>',
+  trend: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>',
+  truck: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 18V6a2 2 0 00-2-2H4a2 2 0 00-2 2v11a1 1 0 001 1h2"/><path d="M15 18H9"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></svg>',
+  hardhat: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 18a1 1 0 001 1h18a1 1 0 001-1v-2a1 1 0 00-1-1H3a1 1 0 00-1 1z"/><path d="M10 10V5a1 1 0 011-1h2a1 1 0 011 1v5M4 15v-3a6 6 0 016-6M14 6a6 6 0 016 6v3"/></svg>',
+};
+
+/* =============================================================
+   DATA - PROJECTS (with state mutations supported)
+   ============================================================= */
+const STATE = {
+  user: { dept: 'ceo', name: "CEO's Office", initials: 'CO' },
+  notifications: [],
+  resolvedItems: new Set(),  // pending items marked done
+  acknowledgedNotifs: new Set(),
+};
+
+const PROJECTS = [
+  {
+    id: 'hudayriyat-ph2', arm: 'dev1',
+    name: 'Hudayriyat Phase 2 Residential',
+    entity: 'Hudayriyat Development',
+    pm: 'Omar S.',
+    budget: 1850, actual: 1342, progress: 68,
+    status: 'red',
+    plannedHandover: 'Q3 2026', forecastHandover: 'Q4 2026',
+    slippage: 14,
+    pending: [
+      { id:'h2-1', dept:'Finance', icon:'wallet', title:'VO-042 approval — MEP scope change', amount:'AED 8.4M', days:12, owner:'Fatima A.', ownerDept:'Finance', impact:'Blocks MEP contractor on floors 14–18. Every week delay = AED ~180K stand-by cost.', severity:'red', escalations:[
+        { day:0, time:'12d ago', type:'created', text:'Variation order raised by MEP contractor' },
+        { day:3, time:'9d ago', type:'reminder', text:'Auto-reminder sent to Finance owner' },
+        { day:7, time:'5d ago', type:'escalation', text:'Escalated to Head of Finance' },
+        { day:10, time:'2d ago', type:'escalation', text:'Surfaced on Executive portfolio heatmap' },
+        { day:12, time:'today', type:'pending', text:'Awaiting CFO sign-off' },
+      ] },
+      { id:'h2-2', dept:'Legal', icon:'scale', title:'ADDC NOC — substation relocation', amount:'—', days:21, owner:'Sara K.', ownerDept:'Legal', impact:'Delays energization on critical path. Affects testing & commissioning window.', severity:'red', escalations:[
+        { day:0, time:'21d ago', type:'created', text:'NOC request submitted to ADDC' },
+        { day:7, time:'14d ago', type:'reminder', text:'Follow-up sent to ADDC' },
+        { day:14, time:'7d ago', type:'escalation', text:'Escalated to General Counsel' },
+        { day:21, time:'today', type:'pending', text:'Awaiting ADDC response' },
+      ] },
+      { id:'h2-3', dept:'Procurement', icon:'package', title:'Façade panel delivery confirmations', amount:'AED 14.2M PO', days:9, owner:'Ahmed M.', ownerDept:'Procurement', impact:'Risk of 2-week slippage on façade installation if ETAs slip beyond 22 Oct.', severity:'amber', escalations:[
+        { day:0, time:'9d ago', type:'created', text:'Confirmation request sent to vendor' },
+        { day:5, time:'4d ago', type:'reminder', text:'Auto-reminder triggered' },
+        { day:9, time:'today', type:'pending', text:'Awaiting vendor confirmation' },
+      ] },
+      { id:'h2-4', dept:'Design', icon:'pen', title:'RFI-0234 — pool deck waterproofing detail', amount:'—', days:6, owner:'Khalid R.', ownerDept:'Design', impact:'Holds landscaping subcontractor from Block C start.', severity:'amber', escalations:[
+        { day:0, time:'6d ago', type:'created', text:'RFI raised by site team' },
+        { day:3, time:'3d ago', type:'reminder', text:'Reminder to consultant' },
+        { day:6, time:'today', type:'pending', text:'Awaiting consultant response' },
+      ] },
+      { id:'h2-5', dept:'Finance', icon:'trend', title:'Q3 revised cash-flow forecast', amount:'—', days:4, owner:'Finance', ownerDept:'Finance', impact:'Needed for steering committee on 8 Oct.', severity:'amber', escalations:[] },
+      { id:'h2-6', dept:'Procurement', icon:'truck', title:'Lift package — final vendor evaluation', amount:'AED 6.8M PO', days:3, owner:'Ahmed M.', ownerDept:'Procurement', impact:'Award target this week to protect lift installation sequence.', severity:'green', escalations:[] },
+      { id:'h2-7', dept:'Site', icon:'hardhat', title:'Snag list — Block A, level 3', amount:'—', days:2, owner:'Site supervisor', ownerDept:'Site', impact:'MEP contractor awaiting site release.', severity:'green', escalations:[] },
+    ],
+    decisions: [
+      { id:'d1', title:'Approve VO-042 at AED 8.4M', owner:'CFO', due:'8 Oct', priority:'high' },
+      { id:'d2', title:'Go/no-go on lift vendor (AED 6.8M)', owner:'COO', due:'11 Oct', priority:'high' },
+      { id:'d3', title:'Sign off on pool deck alternate detail', owner:'Head of Design', due:'14 Oct', priority:'medium' },
+    ],
+  },
+  {
+    id: 'reem-tower-a', arm: 'dev2',
+    name: 'Reem Hills — Tower A',
+    entity: 'Reem Hills', pm: 'Mariam H.',
+    budget: 980, actual: 762, progress: 79,
+    status: 'amber',
+    plannedHandover: 'Q2 2026', forecastHandover: 'Q2 2026', slippage: 3,
+    pending: [
+      { id:'rta-1', dept:'Procurement', icon:'package', title:'Balustrade — shop drawing approval', amount:'AED 2.1M', days:8, owner:'Procurement', ownerDept:'Procurement', impact:'Risk to handover snag resolution window.', severity:'amber', escalations:[] },
+      { id:'rta-2', dept:'Finance', icon:'wallet', title:'Final retention release schedule', amount:'AED 19M', days:5, owner:'Finance', ownerDept:'Finance', impact:'Required for handover certification.', severity:'amber', escalations:[] },
+    ],
+    decisions: [{ id:'d4', title:'Approve final payment schedule', owner:'CFO', due:'15 Oct', priority:'medium' }],
+  },
+  {
+    id: 'reem-tower-b', arm: 'dev2',
+    name: 'Reem Hills — Tower B',
+    entity: 'Reem Hills', pm: 'Mariam H.',
+    budget: 1020, actual: 445, progress: 42,
+    status: 'green',
+    plannedHandover: 'Q4 2026', forecastHandover: 'Q4 2026', slippage: 0,
+    pending: [{ id:'rtb-1', dept:'Design', icon:'pen', title:'Lobby finish spec sign-off', amount:'—', days:5, owner:'Design', ownerDept:'Design', impact:'Needed before ordering stone.', severity:'amber', escalations:[] }],
+    decisions: [],
+  },
+  {
+    id: 'reem-dev-c12', arm: 'dev2',
+    name: 'Reem Developers — Commercial Plot 12',
+    entity: 'Reem Developers', pm: 'Yousef N.',
+    budget: 640, actual: 289, progress: 45,
+    status: 'amber',
+    plannedHandover: 'Q1 2027', forecastHandover: 'Q1 2027', slippage: 2,
+    pending: [
+      { id:'rdc-1', dept:'Legal', icon:'scale', title:'Anchor tenant LOI — legal review', amount:'—', days:11, owner:'Legal', ownerDept:'Legal', impact:'Holds retail fit-out scope freeze.', severity:'amber', escalations:[] },
+      { id:'rdc-2', dept:'Finance', icon:'trend', title:'Revised leasing IRR model', amount:'—', days:7, owner:'Finance', ownerDept:'Finance', impact:'Needed for board update.', severity:'amber', escalations:[] },
+    ],
+    decisions: [],
+  },
+  {
+    id: 'altamouh-villa-n', arm: 'dev1',
+    name: 'Al Tamouh — Villa Cluster North',
+    entity: 'Al Tamouh Investments', pm: 'Hessa Z.',
+    budget: 420, actual: 198, progress: 51,
+    status: 'green',
+    plannedHandover: 'Q3 2026', forecastHandover: 'Q3 2026', slippage: 0,
+    pending: [], decisions: [],
+  },
+  {
+    id: 'altamouh-villa-s', arm: 'dev1',
+    name: 'Al Tamouh — Villa Cluster South',
+    entity: 'Al Tamouh Investments', pm: 'Hessa Z.',
+    budget: 385, actual: 96, progress: 28,
+    status: 'red',
+    plannedHandover: 'Q1 2027', forecastHandover: 'Q2 2027', slippage: 10,
+    pending: [
+      { id:'avs-1', dept:'Legal', icon:'scale', title:'Master community NOC', amount:'—', days:28, owner:'Legal', ownerDept:'Legal', impact:'Blocks infrastructure mobilization.', severity:'red', escalations:[
+        { day:0, time:'28d ago', type:'created', text:'NOC application initiated' },
+        { day:7, time:'21d ago', type:'reminder', text:'Follow-up with authorities' },
+        { day:14, time:'14d ago', type:'escalation', text:'Escalated to General Counsel' },
+        { day:21, time:'7d ago', type:'escalation', text:'Cross-referenced with similar past NOCs' },
+        { day:28, time:'today', type:'pending', text:'Authority response pending' },
+      ] },
+      { id:'avs-2', dept:'Design', icon:'pen', title:'Landscape design revisions', amount:'—', days:14, owner:'Design', ownerDept:'Design', impact:'Delays tender release.', severity:'amber', escalations:[] },
+    ],
+    decisions: [{ id:'d5', title:'Escalate NOC to group legal', owner:'GC', due:'10 Oct', priority:'high' }],
+  },
+  {
+    id: 'hudayriyat-marina', arm: 'dev1',
+    name: 'Hudayriyat — Marina Retail',
+    entity: 'Hudayriyat Development', pm: 'Omar S.',
+    budget: 510, actual: 132, progress: 26,
+    status: 'amber',
+    plannedHandover: 'Q2 2027', forecastHandover: 'Q2 2027', slippage: 1,
+    pending: [{ id:'hm-1', dept:'Procurement', icon:'package', title:'MEP subcontractor prequalification', amount:'—', days:9, owner:'Procurement', ownerDept:'Procurement', impact:'Delays package award.', severity:'amber', escalations:[] }],
+    decisions: [],
+  },
+];
+
+const DEPARTMENTS = [
+  { id:'ceo',         name:"CEO's Office",                desc:"Group portfolio rollup, strategic risks, board view",         icon:'ceo',         initials:'CO' },
+  { id:'delivery',    name:"Delivery",                    desc:"Project delivery view, the BRIDG8 hero panel",                icon:'delivery',    initials:'DL' },
+  { id:'design',      name:"Design Management",           desc:"RFIs, drawings, consultant scorecard",                        icon:'design',      initials:'DM' },
+  { id:'development', name:"Development",                 desc:"Development 1 & 2 portfolios with handover forecasts",        icon:'development', initials:'DV' },
+  { id:'finance',     name:"Finance Department",          desc:"Committed vs. actual vs. progress, variance, accruals",      icon:'finance',     initials:'FN' },
+  { id:'legal',       name:"Legal Department",            desc:"NOCs, contracts, authority approvals",                       icon:'legal',       initials:'LG' },
+  { id:'marketing',   name:"Marketing",                   desc:"Campaigns, launches, brand visibility",                      icon:'marketing',   initials:'MK' },
+  { id:'procurement', name:"Procurement Department",      desc:"Vendor scorecard, POs, material ETAs",                       icon:'procurement', initials:'PR' },
+  { id:'stakeholder', name:"Stakeholder Management",      desc:"Authorities, residents, government touchpoints",             icon:'stakeholder', initials:'SH' },
+  { id:'visioning',   name:"Visioning & Master Planning", desc:"Masterplan readiness, urban design milestones",              icon:'visioning',   initials:'VM' },
+];
+
+const SAMPLE_NOTIFS = [
+  { id:'n1', type:'red', dept:'FINANCE',     title:'VO-042 escalated to CFO',     time:'2 min ago',    body:'Hudayriyat Ph2 · 12 days open' },
+  { id:'n2', type:'amber', dept:'DESIGN',    title:'New RFI on Tower B lobby',    time:'14 min ago',   body:'Reem Hills · awaiting consultant' },
+  { id:'n3', type:'amber', dept:'PROCUREMENT', title:'Vendor confirmation overdue', time:'1 hour ago', body:'Façade panels · Hudayriyat Ph2' },
+];
+
+/* =============================================================
+   HELPERS
+   ============================================================= */
+const fmt = {
+  aed: v => v >= 1000 ? (v/1000).toFixed(2)+'B' : v.toFixed(0)+'M',
+  aedShort: v => v >= 1000 ? (v/1000).toFixed(2)+'B' : v.toFixed(0)+'M',
+  pct: v => v.toFixed(0) + '%',
+};
+
+function deptColor(d) {
+  return ({Finance:'var(--teal)', Procurement:'var(--amber)', Legal:'var(--navy)', Design:'var(--tealDk)', Site:'var(--charcoal)'})[d] || 'var(--gray)';
+}
+
+function severityColor(s) { return ({red:'var(--red)', amber:'var(--amber)', green:'var(--teal)'})[s] || 'var(--gray)'; }
+
+const dept = {
+  color(d) {
+    return ({Finance:'var(--teal)', Procurement:'var(--amber)', Legal:'var(--navy)', Design:'var(--tealDk)', Site:'var(--charcoal)'})[d] || 'var(--gray)';
+  },
+};
+
+function statusChip(s) {
+  const map = { red:['chip-red','AT RISK'], amber:['chip-amber','WATCH'], green:['chip-green','ON TRACK'] };
+  const [cls, label] = map[s] || map.green;
+  return `<span class="chip ${cls}"><span class="dot dot-${s}"></span>${label}</span>`;
+}
+
+function severityColor(s) {
+  return ({red:'var(--red)', amber:'var(--amber)', green:'var(--teal)'})[s] || 'var(--gray)';
+}
+
+function escapeHTML(s) {
+  return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+}
+
+/* =============================================================
+   ROUTING
+   ============================================================= */
+function navigate(path) {
+  if (window.location.hash !== path) {
+    window.location.hash = path;
+  } else {
+    render();
+  }
+}
+
+function getRoute() {
+  const h = window.location.hash.slice(1) || '/ceo';
+  const parts = h.split('/').filter(Boolean);
+  return parts;
+}
+
+window.addEventListener('hashchange', render);
+
+/* =============================================================
+   SIDEBAR NAV + LOGIN GRID
+   ============================================================= */
+function renderSidebar() {
+  const route = getRoute();
+  const currentDept = route[0] || STATE.user.dept || 'ceo';
+  const html = '<div class="sidebar-section-label">Departments</div>' +
+    DEPARTMENTS.map(d =>
+      `<button class="nav-item ${d.id === currentDept ? 'active' : ''}" data-name="${d.name.toLowerCase()}" onclick="navigate('#/${d.id}')">
+        <span class="nav-icon">${ICONS[d.icon] || ''}</span>
+        <span class="nav-label">${d.name}</span>
+      </button>`
+    ).join('');
+  const navEl = document.getElementById('sidebar-nav');
+  if (navEl) navEl.innerHTML = html;
+}
+
+function renderLoginGrid() {
+  const html = DEPARTMENTS.map(d =>
+    `<button class="role-card" data-name="${d.name.toLowerCase()}" onclick="quickLogin('${d.id}')">
+      <div class="role-icon">${ICONS[d.icon] || ''}</div>
+      <div class="role-name">${d.name}</div>
+      <div class="role-desc">${d.desc}</div>
+    </button>`
+  ).join('');
+  const grid = document.getElementById('role-grid');
+  if (grid) grid.innerHTML = html;
+}
+
+function filterSidebar() {
+  const q = (document.getElementById('sidebar-search')?.value || '').toLowerCase();
+  document.querySelectorAll('#sidebar-nav .nav-item').forEach(el => {
+    el.classList.toggle('hidden', !!q && !el.dataset.name.includes(q));
+  });
+}
+
+function filterRoles() {
+  const q = (document.getElementById('role-search')?.value || '').toLowerCase();
+  document.querySelectorAll('#role-grid .role-card').forEach(el => {
+    el.classList.toggle('hidden', !!q && !el.dataset.name.includes(q));
+  });
+}
+
+/* =============================================================
+   BREADCRUMB (now in top bar)
+   ============================================================= */
+function renderBreadcrumb(crumbs) {
+  const inner = document.getElementById('breadcrumb');
+  if (!inner) return;
+  if (!crumbs || crumbs.length === 0) {
+    const route = getRoute();
+    const dept = DEPARTMENTS.find(d => d.id === route[0]);
+    inner.innerHTML = dept ? `<span class="current" style="color: var(--navy); font-weight: 600;">${dept.name}</span>` : '';
+    return;
+  }
+  inner.innerHTML = crumbs.map((c, i) => {
+    if (i === crumbs.length - 1) return `<span class="current" style="color: var(--navy); font-weight: 600;">${escapeHTML(c.label)}</span>`;
+    return `<a onclick="navigate('${c.path}')" style="cursor: pointer; color: var(--gray);">${escapeHTML(c.label)}</a><span class="sep" style="color: var(--grayLt); margin: 0 4px;">›</span>`;
+  }).join('');
+}
+
+/* =============================================================
+   SCREENS
+   ============================================================= */
+function renderExecHome() {
+  renderBreadcrumb([]);
+
+  const totalBudget = PROJECTS.reduce((a,p)=>a+p.budget,0);
+  const totalActual = PROJECTS.reduce((a,p)=>a+p.actual,0);
+  const onTrack = PROJECTS.filter(p=>p.status==='green').length;
+  const watch   = PROJECTS.filter(p=>p.status==='amber').length;
+  const atRisk  = PROJECTS.filter(p=>p.status==='red').length;
+  const pendingCount = PROJECTS.reduce((a,p)=>a+p.pending.filter(x=>!STATE.resolvedItems.has(x.id)).length,0);
+
+  const projectsHTML = PROJECTS.map(p => {
+    const openCount = p.pending.filter(x=>!STATE.resolvedItems.has(x.id)).length;
+    return `
+      <div class="project-card" onclick="navigate('${_depPath}/projects/${p.id}')">
+        <div class="project-card-top">
+          <div>
+            <div class="project-card-entity">${p.entity}</div>
+            <div class="project-card-name">${p.name}</div>
+          </div>
+          ${statusChip(p.status)}
+        </div>
+        <div class="project-card-grid">
+          <div>
+            <div class="project-card-stat-label">BUDGET</div>
+            <div class="project-card-stat-value">${fmt.aed(p.budget)}</div>
+          </div>
+          <div>
+            <div class="project-card-stat-label">PROGRESS</div>
+            <div class="project-card-stat-value">${p.progress}%</div>
+          </div>
+        </div>
+        <div class="project-card-bar">
+          <div class="project-card-bar-fill" style="width: ${p.progress}%; background: ${p.status==='red'?'var(--red)':p.status==='amber'?'var(--amber)':'var(--teal)'};"></div>
+        </div>
+        <div class="project-card-bottom">
+          <div class="project-card-handover">Handover: <b>${p.forecastHandover}</b>${p.slippage>0?` <span style="color:var(--red);">(+${p.slippage}w)</span>`:''}</div>
+          <div class="project-card-pending">${openCount} pending →</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  const topRisks = PROJECTS
+    .filter(p => p.status === 'red')
+    .flatMap(p => p.pending
+      .filter(x => x.severity === 'red' && !STATE.resolvedItems.has(x.id))
+      .map(item => ({...item, projectName: p.name, projectId: p.id})))
+    .slice(0, 3);
+
+  const risksHTML = topRisks.map(item => `
+    <div onclick="navigate('#/exec/projects/${item.projectId}/items/${item.id}')" style="display:flex; align-items:flex-start; gap:12px; padding:14px; border-radius:var(--r); background:var(--grayXLt); cursor:pointer; transition:background 0.12s; margin-bottom:10px;" onmouseover="this.style.background='var(--tealXLt)'" onmouseout="this.style.background='var(--grayXLt)'">
+      <div style="width:3px; align-self:stretch; background:var(--red); border-radius:1px;"></div>
+      <div style="flex:1;">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+          <span class="chip chip-red">${item.dept.toUpperCase()}</span>
+          <span style="font-size:11px; color:var(--gray);">${item.projectName}</span>
+        </div>
+        <div style="font-size:13px; font-weight:600; color:var(--navy);">${item.title}</div>
+        <div style="font-size:11px; color:var(--gray); margin-top:4px;">${item.impact}</div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:18px; font-weight:800; color:var(--red);">${item.days}d</div>
+        <div style="font-size:9px; font-weight:700; color:var(--gray);">OPEN</div>
+      </div>
+    </div>
+  `).join('') || '<div style="padding:24px; text-align:center; color:var(--gray); font-size:13px;">No critical risks. Portfolio in good shape.</div>';
+
+  // Entity exposure
+  const byEntity = {};
+  PROJECTS.forEach(p => byEntity[p.entity] = (byEntity[p.entity] || 0) + p.budget);
+  const entityTotal = Object.values(byEntity).reduce((a,b)=>a+b,0);
+  const entityHTML = Object.entries(byEntity)
+    .sort((a,b) => b[1]-a[1])
+    .map(([ent, val]) => {
+      const pct = (val/entityTotal)*100;
+      return `
+        <div style="margin-bottom:14px;">
+          <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:6px;">
+            <div style="font-size:12px; font-weight:600; color:var(--navy);">${ent}</div>
+            <div style="font-size:11px; color:var(--gray);">${fmt.aed(val)}</div>
+          </div>
+          <div class="bar-bg" style="height:6px;">
+            <div class="bar-fill" style="width:${pct}%; background:var(--teal);"></div>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+  return `
+    <div class="page-fade">
+      <div class="page-header">
+        <div class="page-header-row">
+          <div>
+            <div class="eyebrow">EXECUTIVE VIEW</div>
+            <h1>Group portfolio health — at a glance.</h1>
+            <div class="subtitle">Live view across ${PROJECTS.length} active projects · 5 entities · AED ${fmt.aed(totalBudget)} committed capital</div>
+          </div>
+          <div class="text-right">
+            <div style="font-size:11px; color:var(--gray);">Last updated</div>
+            <div style="font-size:13px; font-weight:600; color:var(--navy);">4 minutes ago</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="kpi-grid">
+        <div class="kpi">
+          <div class="kpi-label">COMMITTED CAPITAL</div>
+          <div class="kpi-value">${fmt.aed(totalBudget)}</div>
+          <div class="kpi-sub">AED · across ${PROJECTS.length} projects</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">SPEND TO DATE</div>
+          <div class="kpi-value">${fmt.aed(totalActual)}</div>
+          <div class="kpi-sub">${((totalActual/totalBudget)*100).toFixed(0)}% of committed</div>
+        </div>
+        <div class="kpi ${atRisk>0?'alert':''}">
+          <div class="kpi-label">PROJECTS AT RISK</div>
+          <div class="kpi-value">${atRisk}</div>
+          <div class="kpi-sub">${watch} watch · ${onTrack} on track</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">OPEN ACTIONS</div>
+          <div class="kpi-value">${pendingCount}</div>
+          <div class="kpi-sub">pending inputs across portfolio</div>
+        </div>
+      </div>
+
+      <div style="margin-bottom:24px;">
+        <div class="flex-between" style="margin-bottom:12px;">
+          <h2 class="section-title">Portfolio heatmap</h2>
+          <div style="font-size:11px; color:var(--gray);">Click a project to drill into the Project Delivery view</div>
+        </div>
+        <div class="project-grid">${projectsHTML}</div>
+      </div>
+
+      <div style="display:grid; grid-template-columns: 2fr 1fr; gap: 16px;">
+        <div class="card">
+          <div class="card-header">
+            <h3>Top risks requiring executive intervention</h3>
+            <div class="chip chip-red"><span class="dot dot-red"></span>${atRisk} AT RISK</div>
+          </div>
+          <div style="padding:16px 22px;">${risksHTML}</div>
+        </div>
+        <div class="card card-pad">
+          <h3 class="section-title">Capital exposure by entity</h3>
+          ${entityHTML}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderProjectDetail(deptId, projectId) {
+  const _depPath = "#/" + deptId;
+  const p = PROJECTS.find(x => x.id === projectId);
+  if (!p) return '<div class="card card-pad">Project not found.</div>';
+
+  const _dept = DEPARTMENTS.find(d => d.id === deptId);
+  renderBreadcrumb([
+    { label: _dept ? _dept.name : 'Department', path: '#/' + deptId },
+    { label: p.name, path: '#/' + deptId + '/projects/' + p.id },
+  ]);
+
+  const openPending = p.pending.filter(x => !STATE.resolvedItems.has(x.id));
+  const redPending = openPending.filter(x => x.severity === 'red').length;
+  const amberPending = openPending.filter(x => x.severity === 'amber').length;
+  const budgetUtil = (p.actual / p.budget) * 100;
+
+  const pendingHTML = openPending.length === 0
+    ? `<div style="padding:40px 22px; text-align:center; color:var(--gray); font-size:13px;">No outstanding items. Project Delivery has everything it needs.</div>`
+    : openPending.map(item => {
+      const c = dept.color(item.dept);
+      const sev = severityColor(item.severity);
+      return `
+        <div class="pending-row" onclick="navigate('${_depPath}/projects/${p.id}/items/${item.id}')">
+          <div class="pending-icon" style="background:${c}15; color:${c};">
+            <div style="width:18px; height:18px;">${ICONS[item.icon] || ICONS.package}</div>
+          </div>
+          <div>
+            <div class="pending-dept" style="color:${c};">${item.dept.toUpperCase()}</div>
+            <div class="pending-owner">${item.owner}</div>
+          </div>
+          <div>
+            <div class="pending-title">${item.title}</div>
+            ${item.amount !== '—' ? `<div class="pending-meta">${item.amount}</div>` : ''}
+          </div>
+          <div class="pending-impact">${item.impact}</div>
+          <div>
+            <div class="pending-days" style="color:${sev};">${item.days}d</div>
+            <div class="pending-days-lbl">OPEN</div>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+  const decisionsHTML = p.decisions.length === 0
+    ? `<div style="padding:24px; text-align:center; color:var(--gray); font-size:12px;">No decisions outstanding.</div>`
+    : p.decisions.map(d => `
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 0; border-bottom:1px solid var(--grayLt);">
+          <div>
+            <div style="font-size:13px; font-weight:600; color:var(--navy);">${d.title}</div>
+            <div style="font-size:11px; color:var(--gray); margin-top:3px;">Owner: ${d.owner} · Due ${d.due}</div>
+          </div>
+          <span class="chip ${d.priority==='high'?'chip-red':'chip-amber'}">${d.priority.toUpperCase()}</span>
+        </div>
+      `).join('');
+
+  return `
+    <div class="page-fade">
+      <button class="back-link" onclick="navigate('${_depPath}')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        Back to ${_dept ? _dept.name : 'Department'}
+      </button>
+
+      <div class="page-header">
+        <div class="page-header-row">
+          <div>
+            <div class="eyebrow">PROJECT VIEW</div>
+            <div style="display:flex; align-items:center; gap:12px;">
+              <h1>${p.name}</h1>
+              ${statusChip(p.status)}
+            </div>
+            <div class="subtitle">${p.entity} · PM: ${p.pm} · Handover forecast: ${p.forecastHandover}${p.slippage>0?` (slippage: +${p.slippage} weeks)`:' (on schedule)'}</div>
+          </div>
+          <button class="btn btn-ghost" onclick="navigate('${_depPath}/projects/${p.id}/audit')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg>
+            Audit trail
+          </button>
+        </div>
+      </div>
+
+      <div class="kpi-grid">
+        <div class="kpi">
+          <div class="kpi-label">BUDGET</div>
+          <div class="kpi-value">${fmt.aed(p.budget)}</div>
+          <div class="kpi-sub">AED total</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">SPEND TO DATE</div>
+          <div class="kpi-value">${fmt.aed(p.actual)}</div>
+          <div class="kpi-sub">${budgetUtil.toFixed(0)}% utilized</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">PROGRESS</div>
+          <div class="kpi-value">${p.progress}%</div>
+          <div class="kpi-bar"><div class="kpi-bar-fill" style="width:${p.progress}%; background:var(--teal);"></div></div>
+        </div>
+        <div class="kpi ${redPending>0?'alert':''}">
+          <div class="kpi-label">OPEN ITEMS BLOCKING</div>
+          <div class="kpi-value">${openPending.length}</div>
+          <div class="kpi-sub">${redPending} critical · ${amberPending} watch</div>
+        </div>
+      </div>
+
+      <div class="hero-panel">
+        <div class="hero-panel-header">
+          <div>
+            <div class="hero-panel-eyebrow">★ THE BRIDG8 MOMENT</div>
+            <div class="hero-panel-title">Pending from other functions</div>
+            <div class="hero-panel-sub">Every item the PM would have to chase — visible, accountable, time-stamped. Click any row for the full impact and escalation trail.</div>
+          </div>
+          <div class="hero-panel-counter">
+            <div class="num">${openPending.length}</div>
+            <div class="lbl">OPEN ITEMS</div>
+          </div>
+        </div>
+        <div>${pendingHTML}</div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card card-pad">
+          <h3 class="section-title">Decisions pending this week</h3>
+          ${decisionsHTML}
+        </div>
+        <div class="card card-pad">
+          <h3 class="section-title">Schedule confidence</h3>
+          <div style="display:flex; align-items:baseline; gap:10px; margin-bottom:10px;">
+            <div style="font-size:34px; font-weight:800; color:${p.slippage>4?'var(--red)':p.slippage>0?'var(--amber)':'var(--green)'};">${p.slippage === 0 ? 'On time' : `+${p.slippage}w`}</div>
+            <div style="font-size:12px; color:var(--gray);">vs. planned handover</div>
+          </div>
+          <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--gray); margin-bottom:6px;">
+            <span>Planned: ${p.plannedHandover}</span>
+            <span>Forecast: ${p.forecastHandover}</span>
+          </div>
+          <div class="bar-bg" style="height:6px;">
+            <div class="bar-fill" style="width:${Math.min(100, p.progress)}%; background:${p.status==='red'?'var(--red)':p.status==='amber'?'var(--amber)':'var(--teal)'};"></div>
+          </div>
+          <div style="font-size:11px; color:var(--gray); margin-top:14px;">
+            Risk drivers: ${openPending.filter(x=>x.severity==='red').map(x=>x.dept).join(', ') || 'none flagged'}
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderItemDetail(deptId, projectId, itemId) {
+  const _depPath = "#/" + deptId;
+  const p = PROJECTS.find(x => x.id === projectId);
+  if (!p) return '<div class="card card-pad">Project not found.</div>';
+  const item = p.pending.find(x => x.id === itemId);
+  if (!item) return '<div class="card card-pad">Item not found.</div>';
+
+  const _dept = DEPARTMENTS.find(d => d.id === deptId);
+  renderBreadcrumb([
+    { label: _dept ? _dept.name : 'Department', path: '#/' + deptId },
+    { label: p.name, path: '#/' + deptId + '/projects/' + p.id },
+    { label: item.title, path: '#/' + deptId + '/projects/' + p.id + '/items/' + item.id },
+  ]);
+
+  const sev = severityColor(item.severity);
+  const c = dept.color(item.dept);
+  const isResolved = STATE.resolvedItems.has(item.id);
+
+  const escalations = item.escalations && item.escalations.length > 0
+    ? item.escalations
+    : [
+        { day: 0, time: `${item.days}d ago`, type: 'created', text: `Item raised by ${item.owner}` },
+        { day: Math.floor(item.days/2), time: `${Math.floor(item.days/2)}d ago`, type: 'reminder', text: 'Auto-reminder triggered' },
+        { day: item.days, time: 'today', type: 'pending', text: 'Awaiting response' },
+      ];
+
+  const timelineHTML = escalations.map((e, i) => {
+    const isAlert = e.type === 'escalation';
+    return `
+      <div class="timeline-item ${isAlert ? 'alert' : ''}" data-step="${i}">
+        <div class="timeline-time">${e.time.toUpperCase()}</div>
+        <div class="timeline-title">${e.text}</div>
+        <div class="timeline-body">${e.type === 'created' ? 'Logged in BRIDG8 with full owner attribution.' :
+          e.type === 'reminder' ? 'BRIDG8 sent an automated nudge to the owner. No human intervention required.' :
+          e.type === 'escalation' ? 'Threshold exceeded. BRIDG8 routed to the next level in the escalation chain.' :
+          'Currently awaiting next step.'}</div>
+      </div>
+    `;
+  }).join('');
+
+  return `
+    <div class="page-fade">
+      <button class="back-link" onclick="navigate('${_depPath}/projects/${p.id}')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        Back to ${p.name}
+      </button>
+
+      <div class="page-header">
+        <div class="page-header-row">
+          <div style="display:flex; align-items:center; gap:14px;">
+            <div style="width:48px; height:48px; border-radius:var(--r); background:${c}15; color:${c}; display:flex; align-items:center; justify-content:center;">
+              <div style="width:22px; height:22px;">${ICONS[item.icon] || ICONS.package}</div>
+            </div>
+            <div>
+              <div class="eyebrow" style="color:${c};">${item.dept.toUpperCase()}</div>
+              <h1>${item.title}</h1>
+              <div class="subtitle">${p.name} · ${p.entity} · Owner: ${item.owner}</div>
+            </div>
+          </div>
+          ${isResolved
+            ? `<span class="chip chip-green"><span class="dot dot-green"></span>RESOLVED</span>`
+            : `<div style="display:flex; gap:8px;">
+                <button class="btn btn-ghost" onclick="openWhatIf('${item.id}')" title="Project schedule impact scenarios">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.66 18a4 4 0 008.68 0M12 2v4M5.5 9.5l3 3M18.5 9.5l-3 3"/><circle cx="12" cy="12" r="3"/></svg>
+                  What if?
+                </button>
+                <button class="btn btn-ghost" onclick="replayEscalation()" title="Animate the escalation sequence">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                  Replay escalation
+                </button>
+                <button class="btn btn-teal" onclick="resolveItem('${p.id}','${item.id}')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                Mark resolved
+               </button>
+              </div>`
+          }
+        </div>
+      </div>
+
+      <div class="kpi-grid" style="grid-template-columns: repeat(3, 1fr);">
+        <div class="kpi" style="${item.severity==='red'?'background:var(--redLt); border-color:var(--red);':''}">
+          <div class="kpi-label" style="${item.severity==='red'?'color:var(--red);':''}">OPEN FOR</div>
+          <div class="kpi-value" style="color:${sev};">${item.days} days</div>
+          <div class="kpi-sub">since first raised</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">VALUE</div>
+          <div class="kpi-value" style="font-size:24px;">${item.amount === '—' ? 'No direct financial impact' : item.amount}</div>
+          <div class="kpi-sub">commitment exposure</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">SEVERITY</div>
+          <div class="kpi-value" style="font-size:24px; color:${sev};">${item.severity === 'red' ? 'Critical' : item.severity === 'amber' ? 'Watch' : 'Low'}</div>
+          <div class="kpi-sub">based on age &amp; impact</div>
+        </div>
+      </div>
+
+      <div class="detail-grid">
+        <div>
+          <div class="card card-pad mb-16">
+            <h3 class="section-title">Impact on delivery</h3>
+            <p style="font-size:13px; line-height:1.6; color:var(--charcoal);">${item.impact}</p>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <h3>Escalation timeline</h3>
+              <div class="chip chip-teal">BRIDG8 AUTOMATED</div>
+            </div>
+            <div style="padding:20px 22px;">
+              <div class="timeline">${timelineHTML}</div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="card card-pad mb-16">
+            <h3 class="section-title">BRIDG8 actions taken</h3>
+            <div style="display:flex; flex-direction:column; gap:10px;">
+              <div style="display:flex; gap:10px; align-items:flex-start;">
+                <div style="width:24px; height:24px; border-radius:50%; background:var(--tealLt); color:var(--tealDk); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+                <div style="font-size:12px; color:var(--charcoal);">Auto-reminder sent to ${item.owner} on day ${Math.floor(item.days/2)}</div>
+              </div>
+              <div style="display:flex; gap:10px; align-items:flex-start;">
+                <div style="width:24px; height:24px; border-radius:50%; background:var(--tealLt); color:var(--tealDk); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+                <div style="font-size:12px; color:var(--charcoal);">Escalation to function head triggered at day ${item.severity==='red'?'7':'14'}</div>
+              </div>
+              <div style="display:flex; gap:10px; align-items:flex-start;">
+                <div style="width:24px; height:24px; border-radius:50%; background:var(--tealLt); color:var(--tealDk); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+                <div style="font-size:12px; color:var(--charcoal);">Surfaced on Executive heatmap as ${item.severity==='red'?'AT RISK':'WATCH'}</div>
+              </div>
+              <div style="display:flex; gap:10px; align-items:flex-start;">
+                <div style="width:24px; height:24px; border-radius:50%; background:var(--tealLt); color:var(--tealDk); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+                <div style="font-size:12px; color:var(--charcoal);">Notification fired to PM and CFO queues</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card card-pad">
+            <h3 class="section-title">Without BRIDG8</h3>
+            <p style="font-size:12px; line-height:1.6; color:var(--gray);">This item would have been chased manually via emails and follow-up calls, with no automatic escalation, no time-stamped audit trail, and no portfolio-level visibility until the next steering committee.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderAuditTrail(deptId, projectId) {
+  const _depPath = "#/" + deptId;
+  const p = PROJECTS.find(x => x.id === projectId);
+  if (!p) return '<div class="card card-pad">Project not found.</div>';
+
+  const _dept = DEPARTMENTS.find(d => d.id === deptId);
+  renderBreadcrumb([
+    { label: _dept ? _dept.name : 'Department', path: '#/' + deptId },
+    { label: p.name, path: '#/' + deptId + '/projects/' + p.id },
+    { label: 'Audit trail', path: '#/' + deptId + '/projects/' + p.id + '/audit' },
+  ]);
+
+  // Synthesize audit events from all items
+  const allEvents = p.pending.flatMap(item => {
+    const events = item.escalations || [];
+    return events.map(e => ({...e, item}));
+  }).sort((a, b) => b.day - a.day);  // most recent first
+
+  const auditHTML = allEvents.map(e => `
+    <tr>
+      <td style="font-family:var(--font-mono); font-size:11px; color:var(--gray);">${e.time.toUpperCase()}</td>
+      <td><span class="chip chip-${e.type==='escalation'?'red':e.type==='reminder'?'amber':'teal'}">${e.type.toUpperCase()}</span></td>
+      <td><b style="color:var(--navy);">${e.item.title}</b></td>
+      <td style="color:var(--gray); font-size:12px;">${e.item.dept}</td>
+      <td style="color:var(--charcoal); font-size:12px;">${e.text}</td>
+    </tr>
+  `).join('') || '<tr><td colspan="5" style="text-align:center; color:var(--gray); padding:24px;">No audit events recorded yet.</td></tr>';
+
+  return `
+    <div class="page-fade">
+      <button class="back-link" onclick="navigate('${_depPath}/projects/${p.id}')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        Back to ${p.name}
+      </button>
+
+      <div class="page-header">
+        <div class="eyebrow">AUDIT TRAIL</div>
+        <h1>${p.name}</h1>
+        <div class="subtitle">Every BRIDG8 action, time-stamped. Audit-ready for board reporting and PJSC governance.</div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h3>Event log</h3>
+          <div class="chip chip-navy">${allEvents.length} EVENTS</div>
+        </div>
+        <table class="table">
+          <thead>
+            <tr>
+              <th style="width:120px;">Time</th>
+              <th style="width:120px;">Type</th>
+              <th>Item</th>
+              <th style="width:120px;">Department</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>${auditHTML}</tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
+function renderHomePageHeader(dept, h1, sub) {
+  renderBreadcrumb([{ label: dept.name, path: `#/${dept.id}` }]);
+  return `
+    <div class="page-header">
+      <div class="page-header-row">
+        <div>
+          <div class="eyebrow">${dept.name.toUpperCase()}</div>
+          <h1>${h1}</h1>
+          <div class="subtitle">${sub}</div>
+        </div>
+        <div style="text-align: right;">
+          <div style="font-size:11px; color:var(--gray);">Last updated</div>
+          <div style="font-size:13px; font-weight:600; color:var(--navy);">4 minutes ago</div>
+        </div>
+      </div>
+    </div>`;
+}
+
+/* CEO's Office - portfolio rollup like the old Exec view */
+function renderCEO(dept) {
+  const totalBudget = PROJECTS.reduce((a,p)=>a+p.budget,0);
+  const totalActual = PROJECTS.reduce((a,p)=>a+p.actual,0);
+  const onTrack = PROJECTS.filter(p=>p.status==='green').length;
+  const watch = PROJECTS.filter(p=>p.status==='amber').length;
+  const atRisk = PROJECTS.filter(p=>p.status==='red').length;
+  const pendingCount = PROJECTS.reduce((a,p)=>a+p.pending.filter(x=>!STATE.resolvedItems.has(x.id)).length,0);
+
+  const projectsHTML = PROJECTS.map(p => {
+    const openCount = p.pending.filter(x=>!STATE.resolvedItems.has(x.id)).length;
+    return `
+      <div class="project-card" onclick="navigate('#/ceo/projects/${p.id}')">
+        <div class="project-card-top">
+          <div>
+            <div class="project-card-entity">${p.entity.toUpperCase()}</div>
+            <div class="project-card-name">${p.name}</div>
+          </div>
+          ${statusChip(p.status)}
+        </div>
+        <div class="project-card-grid">
+          <div><div class="project-card-stat-label">BUDGET</div><div class="project-card-stat-value">${fmt.aedShort(p.budget)}</div></div>
+          <div><div class="project-card-stat-label">PROGRESS</div><div class="project-card-stat-value">${p.progress}%</div></div>
+        </div>
+        <div class="project-card-bar"><div class="project-card-bar-fill" style="width:${p.progress}%; background:${p.status==='red'?'var(--red)':p.status==='amber'?'var(--amber)':'var(--teal)'};"></div></div>
+        <div class="project-card-bottom">
+          <div class="project-card-handover">Handover: <b>${p.forecastHandover}</b>${p.slippage>0?` <span style="color:var(--red);">(+${p.slippage}w)</span>`:''}</div>
+          <div class="project-card-pending">${openCount} pending →</div>
+        </div>
+      </div>`;
+  }).join('');
+
+  const topRisks = PROJECTS.filter(p=>p.status==='red')
+    .flatMap(p => p.pending.filter(x=>x.severity==='red' && !STATE.resolvedItems.has(x.id)).map(item=>({...item, projectName:p.name, projectId:p.id})))
+    .slice(0,3);
+  const risksHTML = topRisks.map(item => `
+    <div onclick="navigate('#/ceo/projects/${item.projectId}/items/${item.id}')" style="display:flex; align-items:flex-start; gap:12px; padding:12px; border-radius:6px; background:var(--grayXLt); cursor:pointer; margin-bottom:8px;">
+      <div style="width:3px; align-self:stretch; background:var(--red); border-radius:1px;"></div>
+      <div style="flex:1;">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+          <span class="chip chip-red">${item.dept.toUpperCase()}</span>
+          <span style="font-size:11px; color:var(--gray);">${item.projectName}</span>
+        </div>
+        <div style="font-size:13px; font-weight:600; color:var(--navy);">${item.title}</div>
+        <div style="font-size:11px; color:var(--gray); margin-top:4px;">${item.impact}</div>
+      </div>
+      <div style="text-align:right;"><div style="font-size:17px; font-weight:800; color:var(--red);">${item.days}d</div><div style="font-size:9px; font-weight:700; color:var(--gray);">OPEN</div></div>
+    </div>`).join('') || '<div style="padding:24px; text-align:center; color:var(--gray); font-size:13px;">No critical risks. Portfolio in good shape.</div>';
+
+  const byEntity = {};
+  PROJECTS.forEach(p => byEntity[p.entity] = (byEntity[p.entity] || 0) + p.budget);
+  const entityTotal = Object.values(byEntity).reduce((a,b)=>a+b,0);
+  const entityHTML = Object.entries(byEntity).sort((a,b)=>b[1]-a[1]).map(([ent,val]) => {
+    const pct = (val/entityTotal)*100;
+    return `<div style="margin-bottom:12px;">
+      <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:5px;">
+        <div style="font-size:12px; font-weight:600; color:var(--navy);">${ent}</div>
+        <div style="font-size:11px; color:var(--gray);">${fmt.aedShort(val)}</div>
+      </div>
+      <div class="bar-bg" style="height:6px;"><div class="bar-fill" style="width:${pct}%; background:var(--teal);"></div></div>
+    </div>`;
+  }).join('');
+
+  return renderHomePageHeader(dept, 'Group portfolio health — at a glance.', `Live view across ${PROJECTS.length} active projects · ${Object.keys(byEntity).length} entities · AED ${fmt.aedShort(totalBudget)} committed capital`) + `
+    <div class="grid grid-cols-4 gap-4 mb-6">
+      <div class="kpi-card"><div class="kpi-label">COMMITTED CAPITAL</div><div class="kpi-value">${fmt.aedShort(totalBudget)}</div><div class="kpi-sub">AED · across ${PROJECTS.length} projects</div></div>
+      <div class="kpi-card"><div class="kpi-label">SPEND TO DATE</div><div class="kpi-value">${fmt.aedShort(totalActual)}</div><div class="kpi-sub">${((totalActual/totalBudget)*100).toFixed(0)}% of committed</div></div>
+      <div class="kpi-card" style="${atRisk>0?'background:var(--redLt); border-color:var(--red);':''}"><div class="kpi-label" style="${atRisk>0?'color:var(--red);':''}">PROJECTS AT RISK</div><div class="kpi-value" style="${atRisk>0?'color:var(--red);':''}">${atRisk}</div><div class="kpi-sub">${watch} watch · ${onTrack} on track</div></div>
+      <div class="kpi-card"><div class="kpi-label">OPEN ACTIONS</div><div class="kpi-value">${pendingCount}</div><div class="kpi-sub">pending across portfolio</div></div>
+    </div>
+    <div class="mb-8">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <h2 style="font-size:13px; font-weight:700; color:var(--navy); margin:0;">Portfolio heatmap</h2>
+        <div style="font-size:11px; color:var(--gray);">Click a project to drill in</div>
+      </div>
+      <div class="grid grid-cols-3 gap-4">${projectsHTML}</div>
+    </div>
+    <div style="display:grid; grid-template-columns: 2fr 1fr; gap:14px;">
+      <div class="card">
+        <div style="padding:14px 22px; border-bottom:1px solid var(--grayLt); display:flex; align-items:center; justify-content:space-between;"><h3 style="font-size:13px; font-weight:700; color:var(--navy);">Top risks requiring executive intervention</h3><div class="chip chip-red"><span class="dot dot-red"></span>${atRisk} AT RISK</div></div>
+        <div style="padding:14px 22px;">${risksHTML}</div>
+      </div>
+      <div class="card" style="padding:20px 22px;"><h3 style="font-size:13px; font-weight:700; color:var(--navy); margin-bottom:10px;">Capital exposure by entity</h3>${entityHTML}</div>
+    </div>`;
+}
+
+/* DELIVERY - all-projects view + top-5 oldest pending across portfolio */
+function renderDelivery(dept) {
+  const allPending = PROJECTS.flatMap(p => p.pending.filter(x => !STATE.resolvedItems.has(x.id)).map(item => ({...item, projectName: p.name, projectId: p.id})));
+  const totalPending = allPending.length;
+  const redCount = allPending.filter(x=>x.severity==='red').length;
+  const amberCount = allPending.filter(x=>x.severity==='amber').length;
+  const totalProjects = PROJECTS.length;
+  const atRisk = PROJECTS.filter(p=>p.status==='red').length;
+
+  const projectsHTML = PROJECTS.map(p => {
+    const openCount = p.pending.filter(x=>!STATE.resolvedItems.has(x.id)).length;
+    return `
+      <div class="project-card" onclick="navigate('#/delivery/projects/${p.id}')">
+        <div class="project-card-top">
+          <div>
+            <div class="project-card-entity">${p.entity.toUpperCase()}</div>
+            <div class="project-card-name">${p.name}</div>
+          </div>
+          ${statusChip(p.status)}
+        </div>
+        <div class="project-card-grid">
+          <div><div class="project-card-stat-label">PM</div><div class="project-card-stat-value" style="font-size:12px;">${p.pm}</div></div>
+          <div><div class="project-card-stat-label">PROGRESS</div><div class="project-card-stat-value">${p.progress}%</div></div>
+        </div>
+        <div class="project-card-bar"><div class="project-card-bar-fill" style="width:${p.progress}%; background:${p.status==='red'?'var(--red)':p.status==='amber'?'var(--amber)':'var(--teal)'};"></div></div>
+        <div class="project-card-bottom">
+          <div class="project-card-handover">Handover: <b>${p.forecastHandover}</b>${p.slippage>0?` <span style="color:var(--red);">(+${p.slippage}w)</span>`:''}</div>
+          <div class="project-card-pending">${openCount} pending →</div>
+        </div>
+      </div>`;
+  }).join('');
+
+  const topPendingHTML = allPending.sort((a,b)=>b.days-a.days).slice(0,5).map(item => {
+    const c = deptColor(item.dept);
+    const sev = severityColor(item.severity);
+    return `
+      <div class="pending-row" onclick="navigate('#/delivery/projects/${item.projectId}/items/${item.id}')">
+        <div class="pending-icon" style="background:${c}15; color:${c};">
+          <div style="width:18px; height:18px;">${ICONS[item.icon]||ICONS.package}</div>
+        </div>
+        <div>
+          <div class="pending-dept" style="color:${c};">${item.dept.toUpperCase()}</div>
+          <div class="pending-owner">${item.projectName}</div>
+        </div>
+        <div>
+          <div class="pending-title">${item.title}</div>
+          ${item.amount !== '—' ? `<div class="pending-meta">${item.amount}</div>` : ''}
+        </div>
+        <div class="pending-impact">${item.impact}</div>
+        <div><div class="pending-days" style="color:${sev};">${item.days}d</div><div class="pending-days-lbl">OPEN</div></div>
+      </div>`;
+  }).join('');
+
+  return renderHomePageHeader(dept, 'Project delivery — every blocker, every owner, every action.', `${totalProjects} active projects · ${atRisk} at risk · ${totalPending} open items pending across functions`) + `
+    <div class="grid grid-cols-4 gap-4 mb-6">
+      <div class="kpi-card"><div class="kpi-label">ACTIVE PROJECTS</div><div class="kpi-value">${totalProjects}</div><div class="kpi-sub">across all entities</div></div>
+      <div class="kpi-card" style="${atRisk>0?'background:var(--redLt); border-color:var(--red);':''}"><div class="kpi-label" style="${atRisk>0?'color:var(--red);':''}">PROJECTS AT RISK</div><div class="kpi-value" style="${atRisk>0?'color:var(--red);':''}">${atRisk}</div><div class="kpi-sub">requiring intervention</div></div>
+      <div class="kpi-card"><div class="kpi-label">OPEN ITEMS PORTFOLIO</div><div class="kpi-value">${totalPending}</div><div class="kpi-sub">${redCount} critical · ${amberCount} watch</div></div>
+      <div class="kpi-card"><div class="kpi-label">DECISIONS THIS WEEK</div><div class="kpi-value">${PROJECTS.reduce((a,p)=>a+p.decisions.length,0)}</div><div class="kpi-sub">awaiting approval</div></div>
+    </div>
+    <div class="card mb-6" style="border: 2px solid var(--teal); box-shadow: 0 8px 24px rgba(91,158,142,0.12);">
+      <div style="background: linear-gradient(135deg, var(--tealXLt) 0%, var(--tealLt) 100%); padding: 16px 22px; border-bottom: 1px solid var(--grayLt); display:flex; align-items:center; justify-content:space-between;">
+        <div>
+          <div style="font-size:10px; letter-spacing:0.18em; text-transform:uppercase; font-weight:800; color:var(--tealDk);">★ THE BRIDG8 MOMENT</div>
+          <div style="font-size:17px; font-weight:800; color:var(--navy); margin-top:4px;">Top 5 oldest pending — across the entire portfolio</div>
+          <div style="font-size:12px; color:var(--charcoal); margin-top:4px;">The items every PM would otherwise be chasing manually. Click any row for detail.</div>
+        </div>
+        <div style="text-align:right;"><div style="font-size:30px; font-weight:800; color:var(--navy); line-height:1;">${totalPending}</div><div style="font-size:10px; letter-spacing:0.1em; font-weight:700; color:var(--gray); margin-top:2px;">OPEN ITEMS</div></div>
+      </div>
+      <div>${topPendingHTML}</div>
+    </div>
+    <div class="mb-8">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <h2 style="font-size:13px; font-weight:700; color:var(--navy); margin:0;">All active projects</h2>
+        <div style="font-size:11px; color:var(--gray);">Click to drill into a project</div>
+      </div>
+      <div class="grid grid-cols-3 gap-4">${projectsHTML}</div>
+    </div>`;
+}
+
+/* DESIGN MANAGEMENT */
+function renderDesign(dept) {
+  const RFIS = [
+    {id:'RFI-0142', proj:'Al Tamouh — Villa Cluster South', projId:'altamouh-villa-s', consultant:'TerraForm Civil', discipline:'Civil', title:'Road gradient clarification — Sector B', days:18, sev:'red', impact:'Blocks infrastructure tender release', status:'Awaiting authority'},
+    {id:'RFI-0156', proj:'Reem Hills — Tower B', projId:'reem-tower-b', consultant:'Stratum Engineering', discipline:'Structural', title:'Façade curvature tolerance standard', days:12, sev:'red', impact:'Holds façade shop drawings', status:'Awaiting consultant'},
+    {id:'RFI-0215', proj:'Hudayriyat — Marina Retail', projId:'hudayriyat-marina', consultant:'Archaeon Design', discipline:'Architecture', title:'Storefront mullion spacing spec', days:9, sev:'amber', impact:'Delays retail fit-out tender', status:'Awaiting consultant'},
+    {id:'RFI-0223', proj:'Reem Developers — Plot 12', projId:'reem-dev-c12', consultant:'Archaeon Design', discipline:'Architecture', title:'Retail frontage module specification', days:8, sev:'amber', impact:'Holds anchor tenant coordination', status:'With client'},
+    {id:'RFI-0234', proj:'Hudayriyat Phase 2 Residential', projId:'hudayriyat-ph2', consultant:'Archaeon Design', discipline:'Architecture', title:'Pool deck waterproofing detail', days:6, sev:'amber', impact:'Holds landscaping subcontractor', status:'Awaiting consultant'},
+    {id:'RFI-0198', proj:'Reem Hills — Tower A', projId:'reem-tower-a', consultant:'Lumière Interiors', discipline:'Interior', title:'Lobby finish material substitution', days:4, sev:'amber', impact:'Affects stone procurement lead time', status:'With client'},
+    {id:'RFI-0201', proj:'Hudayriyat Phase 2 Residential', projId:'hudayriyat-ph2', consultant:'MEPtech', discipline:'MEP', title:'Chilled water riser routing conflict', days:3, sev:'green', impact:'Resolution pending', status:'Awaiting consultant'},
+    {id:'RFI-0089', proj:'Al Tamouh — Villa North', projId:'altamouh-villa-n', consultant:'Verdant Landscape', discipline:'Landscape', title:'Irrigation zoning revisions', days:2, sev:'green', impact:'No delivery impact', status:'Awaiting consultant'},
+  ];
+  const CONS = [
+    {name:'Archaeon Design',role:'Lead Architect',rfis:3,turn:5.8,onTime:88,status:'green'},
+    {name:'Stratum Engineering',role:'Structural',rfis:1,turn:9.1,onTime:72,status:'amber'},
+    {name:'MEPtech',role:'MEP',rfis:1,turn:4.2,onTime:94,status:'green'},
+    {name:'Lumière Interiors',role:'Interior Design',rfis:1,turn:6.5,onTime:85,status:'green'},
+    {name:'TerraForm Civil',role:'Civil & Infrastructure',rfis:1,turn:11.3,onTime:61,status:'red'},
+    {name:'Verdant Landscape',role:'Landscape',rfis:1,turn:3.8,onTime:96,status:'green'},
+  ];
+  const DRAW = {pending:37, inReview:12, approved:8, revisions:5};
+  const totalRfis = RFIS.length;
+  const redRfis = RFIS.filter(r=>r.sev==='red').length;
+  const amberRfis = RFIS.filter(r=>r.sev==='amber').length;
+  const avgDays = (RFIS.reduce((a,r)=>a+r.days,0)/totalRfis).toFixed(1);
+
+  const rfiTable = RFIS.sort((a,b)=>b.days-a.days).map(r => `
+    <tr class="clickable" onclick="navigate('#/design/projects/${r.projId}')" style="cursor:pointer;">
+      <td><b style="color:var(--navy);">${r.id}</b></td>
+      <td><div style="color:var(--navy); font-weight:600;">${r.title}</div><div style="font-size:10px; color:var(--gray); margin-top:2px;">${r.impact}</div></td>
+      <td style="color:var(--gray); font-size:11px;">${r.proj}</td>
+      <td style="font-size:12px;">${r.consultant}</td>
+      <td><span class="chip chip-teal">${r.discipline.toUpperCase()}</span></td>
+      <td style="color:var(--gray); font-size:11px; font-style:italic;">${r.status}</td>
+      <td style="text-align:right;"><span style="color:${severityColor(r.sev)}; font-weight:800; font-size:14px;">${r.days}d</span></td>
+    </tr>`).join('');
+
+  const consultantHTML = CONS.map(c => `
+    <div style="display:flex; align-items:center; justify-content:space-between; padding:11px 0; border-bottom:1px solid var(--grayLt);">
+      <div style="flex:1;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span class="dot dot-${c.status}"></span>
+          <div style="font-size:13px; font-weight:700; color:var(--navy);">${c.name}</div>
+        </div>
+        <div style="font-size:11px; color:var(--gray); margin-top:2px;">${c.role} · ${c.rfis} active RFI${c.rfis>1?'s':''}</div>
+      </div>
+      <div style="display:flex; gap:14px; align-items:center;">
+        <div><div style="font-size:9px; color:var(--gray);">AVG TURN</div><div style="font-size:13px; font-weight:700; color:${c.turn>7?'var(--amber)':'var(--navy)'};">${c.turn}d</div></div>
+        <div style="width:80px;"><div style="font-size:9px; color:var(--gray);">ON-TIME</div>
+          <div style="display:flex; align-items:center; gap:6px;">
+            <div class="bar-bg" style="height:5px; flex:1;"><div class="bar-fill" style="width:${c.onTime}%; background:${c.onTime>=85?'var(--teal)':c.onTime>=70?'var(--amber)':'var(--red)'};"></div></div>
+            <span style="font-size:11px; font-weight:700;">${c.onTime}%</span>
+          </div>
+        </div>
+      </div>
+    </div>`).join('');
+
+  return renderHomePageHeader(dept, 'RFIs, drawings, and consultant flow.', `${totalRfis} open RFIs across ${CONS.length} consultants · ${redRfis} critical · ${DRAW.pending} drawings awaiting approval`) + `
+    <div class="grid grid-cols-4 gap-4 mb-6">
+      <div class="kpi-card"><div class="kpi-label">OPEN RFIs</div><div class="kpi-value">${totalRfis}</div><div class="kpi-sub">${redRfis} critical · ${amberRfis} watch</div></div>
+      <div class="kpi-card"><div class="kpi-label">AVG TURNAROUND</div><div class="kpi-value" style="color:${avgDays>7?'var(--amber)':'var(--navy)'};">${avgDays}d</div><div class="kpi-sub">target: 5 days</div></div>
+      <div class="kpi-card"><div class="kpi-label">DRAWINGS PENDING</div><div class="kpi-value">${DRAW.pending}</div><div class="kpi-sub">${DRAW.inReview} in review · ${DRAW.approved} approved</div></div>
+      <div class="kpi-card" style="${redRfis>0?'background:var(--redLt); border-color:var(--red);':''}"><div class="kpi-label" style="${redRfis>0?'color:var(--red);':''}">BLOCKING DELIVERY</div><div class="kpi-value" style="${redRfis>0?'color:var(--red);':''}">${redRfis}</div><div class="kpi-sub">critical-path items</div></div>
+    </div>
+    <div class="card mb-6">
+      <div style="padding:14px 22px; border-bottom:1px solid var(--grayLt); display:flex; align-items:center; justify-content:space-between;">
+        <div><h3 style="font-size:13px; font-weight:700; color:var(--navy);">Open RFIs — by age</h3><div style="font-size:11px; color:var(--gray); margin-top:2px;">Sorted by days open · click to drill into project</div></div>
+        <div class="chip chip-red"><span class="dot dot-red"></span>${redRfis} AT RISK</div>
+      </div>
+      <table class="data-table">
+        <thead><tr><th style="width:90px;">RFI</th><th>Title</th><th>Project</th><th>Consultant</th><th style="width:110px;">Discipline</th><th style="width:140px;">Status</th><th style="text-align:right; width:80px;">Days</th></tr></thead>
+        <tbody>${rfiTable}</tbody>
+      </table>
+    </div>
+    <div class="grid grid-cols-2 gap-4">
+      <div class="card" style="padding:20px 22px;">
+        <h3 style="font-size:13px; font-weight:700; color:var(--navy); margin-bottom:6px;">Consultant scorecard</h3>
+        <div style="font-size:11px; color:var(--gray); margin-bottom:8px;">Performance over trailing 90 days</div>
+        ${consultantHTML}
+      </div>
+      <div class="card" style="padding:20px 22px;">
+        <h3 style="font-size:13px; font-weight:700; color:var(--navy); margin-bottom:6px;">Drawing approval pipeline</h3>
+        <div style="font-size:11px; color:var(--gray); margin-bottom:14px;">Current volume across all projects</div>
+        <div class="grid grid-cols-2 gap-3">
+          <div style="background:var(--tealXLt); padding:14px; border-radius:6px;"><div style="font-size:10px; font-weight:700; letter-spacing:0.06em; color:var(--teal);">PENDING</div><div style="font-size:24px; font-weight:800; color:var(--navy); margin-top:4px;">${DRAW.pending}</div></div>
+          <div style="background:var(--amberLt); padding:14px; border-radius:6px;"><div style="font-size:10px; font-weight:700; letter-spacing:0.06em; color:var(--amber);">IN REVIEW</div><div style="font-size:24px; font-weight:800; color:var(--navy); margin-top:4px;">${DRAW.inReview}</div></div>
+          <div style="background:var(--greenLt); padding:14px; border-radius:6px;"><div style="font-size:10px; font-weight:700; letter-spacing:0.06em; color:var(--green);">APPROVED</div><div style="font-size:24px; font-weight:800; color:var(--navy); margin-top:4px;">${DRAW.approved}</div></div>
+          <div style="background:var(--redLt); padding:14px; border-radius:6px;"><div style="font-size:10px; font-weight:700; letter-spacing:0.06em; color:var(--red);">REVISIONS</div><div style="font-size:24px; font-weight:800; color:var(--navy); margin-top:4px;">${DRAW.revisions}</div></div>
+        </div>
+      </div>
+    </div>`;
+}
+
+/* DEVELOPMENT - dev1/dev2/all toggle */
+function renderDevelopment(dept) {
+  const route = getRoute();
+  const arm = route[1] || 'all';
+  const filtered = arm === 'all' ? PROJECTS : PROJECTS.filter(p => p.arm === arm);
+  const totalBudget = filtered.reduce((a,p)=>a+p.budget,0);
+  const totalActual = filtered.reduce((a,p)=>a+p.actual,0);
+  const atRisk = filtered.filter(p=>p.status==='red').length;
+  const totalPending = filtered.reduce((a,p)=>a+p.pending.filter(x=>!STATE.resolvedItems.has(x.id)).length,0);
+
+  const projectsHTML = filtered.map(p => {
+    const openCount = p.pending.filter(x=>!STATE.resolvedItems.has(x.id)).length;
+    return `
+      <div class="project-card" onclick="navigate('#/development/projects/${p.id}')">
+        <div class="project-card-top">
+          <div>
+            <div class="project-card-entity">${p.arm === 'dev1' ? 'DEV 1' : 'DEV 2'} · ${p.entity.toUpperCase()}</div>
+            <div class="project-card-name">${p.name}</div>
+          </div>
+          ${statusChip(p.status)}
+        </div>
+        <div class="project-card-grid">
+          <div><div class="project-card-stat-label">BUDGET</div><div class="project-card-stat-value">${fmt.aedShort(p.budget)}</div></div>
+          <div><div class="project-card-stat-label">PROGRESS</div><div class="project-card-stat-value">${p.progress}%</div></div>
+        </div>
+        <div class="project-card-bar"><div class="project-card-bar-fill" style="width:${p.progress}%; background:${p.status==='red'?'var(--red)':p.status==='amber'?'var(--amber)':'var(--teal)'};"></div></div>
+        <div class="project-card-bottom">
+          <div class="project-card-handover">Handover: <b>${p.forecastHandover}</b>${p.slippage>0?` <span style="color:var(--red);">(+${p.slippage}w)</span>`:''}</div>
+          <div class="project-card-pending">${openCount} pending →</div>
+        </div>
+      </div>`;
+  }).join('');
+
+  return renderHomePageHeader(dept, 'Development portfolios — both arms.', `Toggle between Development 1 and Development 2, or view consolidated.`) + `
+    <div class="subtabs">
+      <button class="subtab ${arm==='all'?'active':''}" onclick="navigate('#/development')">All Development</button>
+      <button class="subtab ${arm==='dev1'?'active':''}" onclick="navigate('#/development/dev1')">Development 1</button>
+      <button class="subtab ${arm==='dev2'?'active':''}" onclick="navigate('#/development/dev2')">Development 2</button>
+    </div>
+    <div class="grid grid-cols-4 gap-4 mb-6">
+      <div class="kpi-card"><div class="kpi-label">PROJECTS</div><div class="kpi-value">${filtered.length}</div><div class="kpi-sub">${arm==='all'?'across both arms':'in this arm'}</div></div>
+      <div class="kpi-card"><div class="kpi-label">CAPITAL</div><div class="kpi-value">${fmt.aedShort(totalBudget)}</div><div class="kpi-sub">AED committed</div></div>
+      <div class="kpi-card"><div class="kpi-label">SPEND TO DATE</div><div class="kpi-value">${fmt.aedShort(totalActual)}</div><div class="kpi-sub">${totalBudget>0?((totalActual/totalBudget)*100).toFixed(0):0}% utilized</div></div>
+      <div class="kpi-card" style="${atRisk>0?'background:var(--redLt); border-color:var(--red);':''}"><div class="kpi-label" style="${atRisk>0?'color:var(--red);':''}">AT RISK</div><div class="kpi-value" style="${atRisk>0?'color:var(--red);':''}">${atRisk}</div><div class="kpi-sub">${totalPending} open pending</div></div>
+    </div>
+    ${filtered.length > 0
+      ? `<div><h2 style="font-size:13px; font-weight:700; color:var(--navy); margin-bottom:12px;">${arm==='all'?'All projects':arm==='dev1'?'Development 1 projects':'Development 2 projects'}</h2><div class="grid grid-cols-3 gap-4">${projectsHTML}</div></div>`
+      : `<div class="card" style="padding:32px; text-align:center;"><div style="color:var(--gray); font-size:13px;">No projects in this view.</div></div>`
+    }`;
+}
+
+/* LEGAL */
+function renderLegal(dept) {
+  const NOCs = [
+    {id:'NOC-2026-018', auth:'ADDC', proj:'Hudayriyat Ph2', subject:'Substation relocation', days:21, sev:'red', status:'Awaiting authority'},
+    {id:'NOC-2026-021', auth:'Municipality', proj:'Al Tamouh South', subject:'Master community NOC', days:28, sev:'red', status:'Authority review'},
+    {id:'NOC-2026-029', auth:'DEWA', proj:'Reem Tower B', subject:'Transformer capacity uplift', days:9, sev:'amber', status:'Awaiting authority'},
+    {id:'NOC-2026-031', auth:'TRA', proj:'Hudayriyat Marina', subject:'Telecom infrastructure', days:6, sev:'amber', status:'In review'},
+    {id:'NOC-2026-035', auth:'Civil Defense', proj:'Reem Tower A', subject:'Fire safety final approval', days:3, sev:'green', status:'Approved · awaiting cert'},
+  ];
+  const CONTRACTS = [
+    {party:'MEP Prime Engineering', val:42.5, type:'Subcontract', exp:'31 Dec 2027', risk:'red'},
+    {party:'Stone & Co. Interiors', val:18.8, type:'Subcontract', exp:'15 Aug 2026', risk:'green'},
+    {party:'Anchor Tenant LOI', val:0, type:'LOI', exp:'—', risk:'amber'},
+    {party:'GulfBuild Structures', val:58.3, type:'Main contract', exp:'30 Jun 2027', risk:'red'},
+  ];
+  const totalNocs = NOCs.length;
+  const redNocs = NOCs.filter(n=>n.sev==='red').length;
+  const avgDays = (NOCs.reduce((a,n)=>a+n.days,0)/totalNocs).toFixed(1);
+
+  const nocTable = NOCs.sort((a,b)=>b.days-a.days).map(n=>`
+    <tr>
+      <td><b style="color:var(--navy);">${n.id}</b></td>
+      <td>${n.auth}</td>
+      <td><div style="font-weight:600; color:var(--navy);">${n.subject}</div><div style="font-size:11px; color:var(--gray);">${n.proj}</div></td>
+      <td style="font-size:11px; font-style:italic; color:var(--gray);">${n.status}</td>
+      <td style="text-align:right;"><span style="color:${severityColor(n.sev)}; font-weight:800; font-size:14px;">${n.days}d</span></td>
+    </tr>`).join('');
+
+  const contractRows = CONTRACTS.map(c=>`
+    <tr>
+      <td><b style="color:var(--navy);">${c.party}</b></td>
+      <td>${c.type}</td>
+      <td><b>${c.val>0?'AED '+fmt.aedShort(c.val):'—'}</b></td>
+      <td>${c.exp}</td>
+      <td>${statusChip(c.risk)}</td>
+    </tr>`).join('');
+
+  return renderHomePageHeader(dept, 'NOCs, contracts, and authority approvals.', `${totalNocs} active NOCs · ${redNocs} critical · ${CONTRACTS.length} key contracts under management`) + `
+    <div class="grid grid-cols-4 gap-4 mb-6">
+      <div class="kpi-card"><div class="kpi-label">ACTIVE NOCs</div><div class="kpi-value">${totalNocs}</div><div class="kpi-sub">across authorities</div></div>
+      <div class="kpi-card" style="${redNocs>0?'background:var(--redLt); border-color:var(--red);':''}"><div class="kpi-label" style="${redNocs>0?'color:var(--red);':''}">NOCs AT RISK</div><div class="kpi-value" style="${redNocs>0?'color:var(--red);':''}">${redNocs}</div><div class="kpi-sub">delaying handovers</div></div>
+      <div class="kpi-card"><div class="kpi-label">AVG OPEN AGE</div><div class="kpi-value" style="color:${avgDays>14?'var(--amber)':'var(--navy)'};">${avgDays}d</div><div class="kpi-sub">target: ≤14 days</div></div>
+      <div class="kpi-card"><div class="kpi-label">CONTRACT VALUE</div><div class="kpi-value">${fmt.aedShort(CONTRACTS.reduce((a,c)=>a+c.val,0))}</div><div class="kpi-sub">under management</div></div>
+    </div>
+    <div class="card mb-6">
+      <div style="padding:14px 22px; border-bottom:1px solid var(--grayLt); display:flex; align-items:center; justify-content:space-between;"><h3 style="font-size:13px; font-weight:700; color:var(--navy);">Open NOCs — by age</h3><div class="chip chip-red"><span class="dot dot-red"></span>${redNocs} CRITICAL</div></div>
+      <table class="data-table">
+        <thead><tr><th style="width:130px;">NOC ID</th><th style="width:140px;">Authority</th><th>Subject &amp; Project</th><th style="width:200px;">Status</th><th style="text-align:right; width:80px;">Days</th></tr></thead>
+        <tbody>${nocTable}</tbody>
+      </table>
+    </div>
+    <div class="card">
+      <div style="padding:14px 22px; border-bottom:1px solid var(--grayLt);"><h3 style="font-size:13px; font-weight:700; color:var(--navy);">Active contracts &amp; LOIs</h3></div>
+      <table class="data-table">
+        <thead><tr><th>Counterparty</th><th>Type</th><th>Value</th><th>Expiry</th><th>Status</th></tr></thead>
+        <tbody>${contractRows}</tbody>
+      </table>
+    </div>`;
+}
+
+/* MARKETING */
+function renderMarketing(dept) {
+  const CAMPAIGNS = [
+    {name:'Hudayriyat Phase 2 — Pre-launch', status:'green', spend:1.8, leads:412, cpl:4368, channel:'Digital + OOH', proj:'Hudayriyat Ph2'},
+    {name:'Reem Hills Tower B — Sales push', status:'amber', spend:2.4, leads:287, cpl:8362, channel:'Digital', proj:'Reem Tower B'},
+    {name:'Al Tamouh — Community awareness', status:'green', spend:0.6, leads:154, cpl:3896, channel:'Social', proj:'Al Tamouh N'},
+    {name:'Marina Retail — Tenant attraction', status:'amber', spend:0.4, leads:38, cpl:10526, channel:'B2B Direct', proj:'Hudayriyat Marina'},
+    {name:'Reem Tower A — Handover momentum', status:'green', spend:0.3, leads:96, cpl:3125, channel:'Email + PR', proj:'Reem Tower A'},
+  ];
+  const PRESS = [
+    {title:'Hudayriyat Master Plan — Khaleej Times feature', date:'18 Oct', reach:'2.1M', sentiment:'positive'},
+    {title:'Reem Hills sustainability initiative — The National', date:'14 Oct', reach:'1.4M', sentiment:'positive'},
+    {title:'Modon Q3 results coverage — Bloomberg', date:'12 Oct', reach:'4.8M', sentiment:'neutral'},
+    {title:'Al Tamouh community feature — Gulf News', date:'9 Oct', reach:'1.8M', sentiment:'positive'},
+  ];
+  const totalLeads = CAMPAIGNS.reduce((a,c)=>a+c.leads,0);
+  const totalSpend = CAMPAIGNS.reduce((a,c)=>a+c.spend,0);
+  const avgCPL = (totalSpend*1000000/totalLeads).toFixed(0);
+
+  return renderHomePageHeader(dept, 'Campaigns, brand, and demand generation.', `${CAMPAIGNS.length} live campaigns · ${totalLeads} qualified leads this quarter · AED ${fmt.aedShort(totalSpend)} spend`) + `
+    <div class="grid grid-cols-4 gap-4 mb-6">
+      <div class="kpi-card"><div class="kpi-label">LIVE CAMPAIGNS</div><div class="kpi-value">${CAMPAIGNS.length}</div><div class="kpi-sub">across all developments</div></div>
+      <div class="kpi-card"><div class="kpi-label">QUALIFIED LEADS</div><div class="kpi-value">${totalLeads}</div><div class="kpi-sub">this quarter</div></div>
+      <div class="kpi-card"><div class="kpi-label">AVG CPL</div><div class="kpi-value">${parseInt(avgCPL).toLocaleString()}</div><div class="kpi-sub">AED · cost per lead</div></div>
+      <div class="kpi-card"><div class="kpi-label">PRESS REACH</div><div class="kpi-value">10M</div><div class="kpi-sub">trailing 30 days</div></div>
+    </div>
+    <div class="card mb-6">
+      <div style="padding:14px 22px; border-bottom:1px solid var(--grayLt);"><h3 style="font-size:13px; font-weight:700; color:var(--navy);">Active campaigns</h3></div>
+      <table class="data-table">
+        <thead><tr><th>Campaign</th><th>Project</th><th>Status</th><th>Channel</th><th style="text-align:right;">Spend</th><th style="text-align:right;">Leads</th><th style="text-align:right;">CPL</th></tr></thead>
+        <tbody>${CAMPAIGNS.map(c=>`
+          <tr>
+            <td><b style="color:var(--navy);">${c.name}</b></td>
+            <td style="font-size:12px; color:var(--gray);">${c.proj}</td>
+            <td>${statusChip(c.status)}</td>
+            <td style="font-size:12px;">${c.channel}</td>
+            <td style="text-align:right;"><b>${fmt.aedShort(c.spend)}</b></td>
+            <td style="text-align:right;"><b>${c.leads}</b></td>
+            <td style="text-align:right; font-weight:600;">${c.cpl.toLocaleString()}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+    <div class="grid grid-cols-2 gap-4">
+      <div class="card" style="padding:20px 22px;">
+        <h3 style="font-size:13px; font-weight:700; color:var(--navy); margin-bottom:10px;">Lead pipeline by project</h3>
+        ${CAMPAIGNS.map(c => {
+          const pct = (c.leads/totalLeads)*100;
+          return `<div style="margin-bottom:10px;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+              <div style="font-size:12px; font-weight:600; color:var(--navy);">${c.proj}</div>
+              <div style="font-size:11px; color:var(--gray);">${c.leads} leads · ${pct.toFixed(0)}%</div>
+            </div>
+            <div class="bar-bg" style="height:6px;"><div class="bar-fill" style="width:${pct}%; background:var(--teal);"></div></div>
+          </div>`;
+        }).join('')}
+      </div>
+      <div class="card" style="padding:20px 22px;">
+        <h3 style="font-size:13px; font-weight:700; color:var(--navy); margin-bottom:10px;">Recent press &amp; PR</h3>
+        ${PRESS.map(p=>`
+          <div style="padding:10px 0; border-bottom:1px solid var(--grayLt);">
+            <div style="font-size:13px; font-weight:600; color:var(--navy);">${p.title}</div>
+            <div style="display:flex; gap:12px; font-size:11px; color:var(--gray); margin-top:4px; align-items:center;">
+              <span>${p.date}</span><span>Reach: ${p.reach}</span>
+              <span class="chip ${p.sentiment==='positive'?'chip-green':'chip-gray'}">${p.sentiment.toUpperCase()}</span>
+            </div>
+          </div>`).join('')}
+      </div>
+    </div>`;
+}
+
+/* PROCUREMENT */
+function renderProcurementDept(dept) {
+  const VENDORS = [
+    {name:'Alpha Facades LLC', status:'amber', po:14.2, projs:['Hudayriyat Ph2'], onTime:78, note:'Delivery confirmation delayed'},
+    {name:'MEP Prime Engineering', status:'red', po:42.5, projs:['Hudayriyat Ph2','Reem Tower A'], onTime:62, note:'Awaiting VO approval'},
+    {name:'Stone & Co. Interiors', status:'green', po:18.8, projs:['Reem Tower A','Reem Tower B'], onTime:94, note:'On track'},
+    {name:'LiftTech Solutions', status:'amber', po:6.8, projs:['Hudayriyat Ph2'], onTime:81, note:'Final evaluation pending'},
+    {name:'Nexus Landscaping', status:'green', po:4.2, projs:['Al Tamouh N','Al Tamouh S'], onTime:89, note:''},
+    {name:'GulfBuild Structures', status:'red', po:58.3, projs:['Reem Dev C12','Hudayriyat Marina'], onTime:54, note:'Multiple programme slips'},
+  ];
+  const totalOpen = VENDORS.reduce((a,v)=>a+v.po,0);
+  const atRisk = VENDORS.filter(v=>v.status==='red').length;
+
+  const vendorTable = VENDORS.map(v=>`
+    <tr>
+      <td><b style="color:var(--navy);">${v.name}</b></td>
+      <td>${statusChip(v.status)}</td>
+      <td><b>${fmt.aedShort(v.po)}</b></td>
+      <td style="color:var(--gray); font-size:11px;">${v.projs.join(' · ')}</td>
+      <td><div style="display:flex; align-items:center; gap:8px;"><div class="bar-bg" style="height:5px; width:80px;"><div class="bar-fill" style="width:${v.onTime}%; background:${v.onTime>=85?'var(--teal)':v.onTime>=70?'var(--amber)':'var(--red)'};"></div></div><span style="font-size:11px; font-weight:700;">${v.onTime}%</span></div></td>
+      <td style="font-size:11px; font-style:italic; color:var(--gray);">${v.note || '—'}</td>
+    </tr>`).join('');
+
+  const deliveriesHTML = [
+    {mat:'Façade panels — Batch 3',v:'Alpha Facades',date:'18 Oct',sev:'amber',proj:'Hudayriyat Ph2'},
+    {mat:'MEP ducting — Block A',v:'MEP Prime',date:'22 Oct',sev:'red',proj:'Hudayriyat Ph2'},
+    {mat:'Stone slabs (lobby)',v:'Stone & Co.',date:'25 Oct',sev:'green',proj:'Reem Tower A'},
+    {mat:'Lift components',v:'LiftTech',date:'2 Nov',sev:'amber',proj:'Hudayriyat Ph2'},
+    {mat:'Structural steel — Phase 2',v:'GulfBuild',date:'6 Nov',sev:'red',proj:'Reem Dev C12'},
+  ].map(d=>`
+    <div style="display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--grayLt);">
+      <div>
+        <div style="font-size:13px; font-weight:600; color:var(--navy);">${d.mat}</div>
+        <div style="font-size:11px; color:var(--gray); margin-top:2px;">${d.v} · ${d.proj}</div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:13px; font-weight:700; color:var(--navy);">${d.date}</div>
+        ${statusChip(d.sev)}
+      </div>
+    </div>`).join('');
+
+  return renderHomePageHeader(dept, 'Vendor &amp; supply chain control tower.', `${VENDORS.length} active vendors · ${fmt.aedShort(totalOpen)} open commitments · ${atRisk} at risk`) + `
+    <div class="grid grid-cols-4 gap-4 mb-6">
+      <div class="kpi-card"><div class="kpi-label">OPEN POs</div><div class="kpi-value">${fmt.aedShort(totalOpen)}</div><div class="kpi-sub">AED · across all vendors</div></div>
+      <div class="kpi-card" style="${atRisk>0?'background:var(--redLt); border-color:var(--red);':''}"><div class="kpi-label" style="${atRisk>0?'color:var(--red);':''}">VENDORS AT RISK</div><div class="kpi-value" style="${atRisk>0?'color:var(--red);':''}">${atRisk}</div><div class="kpi-sub">affecting 4 projects</div></div>
+      <div class="kpi-card"><div class="kpi-label">AVG ON-TIME</div><div class="kpi-value">76%</div><div class="kpi-sub">trailing 90 days</div></div>
+      <div class="kpi-card"><div class="kpi-label">ETAs AT RISK</div><div class="kpi-value" style="color:var(--amber);">5</div><div class="kpi-sub">within 30 days</div></div>
+    </div>
+    <div class="card mb-6">
+      <div style="padding:14px 22px; border-bottom:1px solid var(--grayLt);"><h3 style="font-size:13px; font-weight:700; color:var(--navy);">Vendor scorecard</h3></div>
+      <table class="data-table">
+        <thead><tr><th>Vendor</th><th>Status</th><th>Open PO</th><th>Projects</th><th>On-Time</th><th>Note</th></tr></thead>
+        <tbody>${vendorTable}</tbody>
+      </table>
+    </div>
+    <div class="grid grid-cols-2 gap-4">
+      <div class="card" style="padding:20px 22px;">
+        <h3 style="font-size:13px; font-weight:700; color:var(--navy); margin-bottom:10px;">Upcoming deliveries — next 30 days</h3>
+        ${deliveriesHTML}
+      </div>
+      <div class="card" style="padding:20px 22px;">
+        <h3 style="font-size:13px; font-weight:700; color:var(--navy); margin-bottom:10px;">Contract exposure concentration</h3>
+        <div style="font-size:11px; color:var(--gray); margin-bottom:10px;">Top 3 vendors = 72% of open commitments</div>
+        ${VENDORS.sort((a,b)=>b.po-a.po).slice(0,6).map(v => {
+          const pct = (v.po/totalOpen)*100;
+          return `<div style="margin-bottom:10px;">
+            <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:5px;">
+              <div style="font-size:12px; font-weight:600; color:var(--navy);">${v.name}</div>
+              <div style="font-size:11px; color:var(--gray);">${fmt.aedShort(v.po)} · ${pct.toFixed(0)}%</div>
+            </div>
+            <div class="bar-bg" style="height:6px;"><div class="bar-fill" style="width:${pct}%; background:${v.status==='red'?'var(--red)':v.status==='amber'?'var(--amber)':'var(--teal)'};"></div></div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+}
+
+/* STAKEHOLDER MANAGEMENT */
+function renderStakeholder(dept) {
+  const AUTHS = [
+    {name:'ADDC', status:'amber', open:3, last:'18 Oct'},
+    {name:'DEWA', status:'green', open:1, last:'21 Oct'},
+    {name:'Abu Dhabi Municipality', status:'red', open:4, last:'14 Oct'},
+    {name:'Civil Defense', status:'green', open:1, last:'24 Oct'},
+    {name:'TRA', status:'amber', open:2, last:'16 Oct'},
+    {name:'Etihad Rail', status:'green', open:1, last:'20 Oct'},
+  ];
+  const ENGAGEMENTS = [
+    {type:'Town hall', proj:'Hudayriyat Ph2', date:'2 Nov', attendees:120, sev:'green'},
+    {type:'Resident workshop', proj:'Reem Hills', date:'5 Nov', attendees:85, sev:'green'},
+    {type:'Authority meeting', proj:'Al Tamouh South', date:'8 Nov', attendees:8, sev:'amber'},
+    {type:'Investor roundtable', proj:'Group', date:'12 Nov', attendees:24, sev:'green'},
+  ];
+  const FEEDBACK = [
+    {channel:'Resident app', count:48, sentiment:78, trend:'up'},
+    {channel:'Customer service', count:124, sentiment:62, trend:'flat'},
+    {channel:'Social listening', count:312, sentiment:71, trend:'up'},
+    {channel:'Authority feedback', count:9, sentiment:55, trend:'down'},
+  ];
+  const totalOpen = AUTHS.reduce((a,n)=>a+n.open,0);
+  const atRisk = AUTHS.filter(a=>a.status==='red').length;
+
+  return renderHomePageHeader(dept, 'Authorities, communities, and partners — one view.', `${AUTHS.length} authorities engaged · ${totalOpen} open touchpoints · ${ENGAGEMENTS.length} upcoming engagements`) + `
+    <div class="grid grid-cols-4 gap-4 mb-6">
+      <div class="kpi-card"><div class="kpi-label">AUTHORITIES ENGAGED</div><div class="kpi-value">${AUTHS.length}</div><div class="kpi-sub">${atRisk} requiring attention</div></div>
+      <div class="kpi-card" style="${atRisk>0?'background:var(--redLt); border-color:var(--red);':''}"><div class="kpi-label" style="${atRisk>0?'color:var(--red);':''}">AT RISK</div><div class="kpi-value" style="${atRisk>0?'color:var(--red);':''}">${atRisk}</div><div class="kpi-sub">authority relationships</div></div>
+      <div class="kpi-card"><div class="kpi-label">OPEN TOUCHPOINTS</div><div class="kpi-value">${totalOpen}</div><div class="kpi-sub">across all stakeholders</div></div>
+      <div class="kpi-card"><div class="kpi-label">UPCOMING ENGAGEMENTS</div><div class="kpi-value">${ENGAGEMENTS.length}</div><div class="kpi-sub">next 30 days</div></div>
+    </div>
+    <div class="grid grid-cols-2 gap-4 mb-6">
+      <div class="card">
+        <div style="padding:14px 22px; border-bottom:1px solid var(--grayLt);"><h3 style="font-size:13px; font-weight:700; color:var(--navy);">Authority engagement health</h3></div>
+        <table class="data-table">
+          <thead><tr><th>Authority</th><th>Status</th><th style="text-align:right;">Open</th><th>Last contact</th></tr></thead>
+          <tbody>${AUTHS.map(a=>`
+            <tr><td><b style="color:var(--navy);">${a.name}</b></td><td>${statusChip(a.status)}</td><td style="text-align:right;"><b>${a.open}</b></td><td style="color:var(--gray); font-size:12px;">${a.last}</td></tr>
+          `).join('')}</tbody>
+        </table>
+      </div>
+      <div class="card" style="padding:20px 22px;">
+        <h3 style="font-size:13px; font-weight:700; color:var(--navy); margin-bottom:10px;">Stakeholder feedback (last 30 days)</h3>
+        ${FEEDBACK.map(f=>`
+          <div style="padding:10px 0; border-bottom:1px solid var(--grayLt);">
+            <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:5px;">
+              <div style="font-size:12px; font-weight:600; color:var(--navy);">${f.channel}</div>
+              <div style="font-size:11px; color:var(--gray);">${f.count} responses</div>
+            </div>
+            <div style="display:flex; align-items:center; gap:10px;">
+              <div class="bar-bg" style="height:6px; flex:1;"><div class="bar-fill" style="width:${f.sentiment}%; background:${f.sentiment>=70?'var(--teal)':f.sentiment>=55?'var(--amber)':'var(--red)'};"></div></div>
+              <span style="font-size:11px; font-weight:700; min-width:38px; text-align:right;">${f.sentiment}%</span>
+              <span style="font-size:11px; color:${f.trend==='up'?'var(--green)':f.trend==='down'?'var(--red)':'var(--gray)'};">${f.trend==='up'?'↑':f.trend==='down'?'↓':'→'}</span>
+            </div>
+          </div>`).join('')}
+      </div>
+    </div>
+    <div class="card">
+      <div style="padding:14px 22px; border-bottom:1px solid var(--grayLt);"><h3 style="font-size:13px; font-weight:700; color:var(--navy);">Upcoming engagements (next 30 days)</h3></div>
+      <table class="data-table">
+        <thead><tr><th>Type</th><th>Project / scope</th><th>Date</th><th style="text-align:right;">Attendees</th><th>Status</th></tr></thead>
+        <tbody>${ENGAGEMENTS.map(e=>`
+          <tr><td><b style="color:var(--navy);">${e.type}</b></td><td style="color:var(--gray);">${e.proj}</td><td>${e.date}</td><td style="text-align:right;"><b>${e.attendees}</b></td><td>${statusChip(e.sev)}</td></tr>
+        `).join('')}</tbody>
+      </table>
+    </div>`;
+}
+
+/* VISIONING & MASTER PLANNING */
+function renderVisioning(dept) {
+  const PLANS = [
+    {name:'Hudayriyat Master Plan v3', stage:'Final approval', completion:92, milestone:'Authority sign-off', sev:'amber'},
+    {name:'Reem Hills North expansion', stage:'Concept design', completion:35, milestone:'Vision workshop', sev:'green'},
+    {name:'Al Tamouh — Phase 4 expansion', stage:'Pre-feasibility', completion:18, milestone:'Site analysis', sev:'green'},
+    {name:'Marina district — refresh', stage:'Schematic', completion:58, milestone:'Stakeholder review', sev:'amber'},
+  ];
+  const APPROVALS = [
+    {auth:'Department of Planning', subject:'Hudayriyat MP v3 final', sev:'amber', days:14},
+    {auth:'Urban Planning Council', subject:'Reem Hills North zoning', sev:'green', days:8},
+    {auth:'Heritage Authority', subject:'Coastal heritage protection — Marina', sev:'red', days:22},
+    {auth:'Department of Culture & Tourism', subject:'Al Tamouh cultural integration', sev:'green', days:5},
+  ];
+  const totalPlans = PLANS.length;
+  const inDelivery = PLANS.filter(p=>p.completion>50).length;
+  const avgCompletion = (PLANS.reduce((a,p)=>a+p.completion,0)/totalPlans).toFixed(0);
+
+  return renderHomePageHeader(dept, 'Master planning &amp; long-horizon vision.', `${totalPlans} active master plans · ${APPROVALS.length} regulatory approvals in motion · vision-to-shovel pipeline visibility`) + `
+    <div class="grid grid-cols-4 gap-4 mb-6">
+      <div class="kpi-card"><div class="kpi-label">ACTIVE MASTER PLANS</div><div class="kpi-value">${totalPlans}</div><div class="kpi-sub">across all districts</div></div>
+      <div class="kpi-card"><div class="kpi-label">AVG COMPLETION</div><div class="kpi-value">${avgCompletion}%</div><div class="kpi-sub">concept to approval</div></div>
+      <div class="kpi-card"><div class="kpi-label">DELIVERY READY</div><div class="kpi-value">${inDelivery}</div><div class="kpi-sub">≥50% complete</div></div>
+      <div class="kpi-card"><div class="kpi-label">REGULATORY APPROVALS</div><div class="kpi-value">${APPROVALS.length}</div><div class="kpi-sub">in motion</div></div>
+    </div>
+    <div class="card mb-6">
+      <div style="padding:14px 22px; border-bottom:1px solid var(--grayLt);"><h3 style="font-size:13px; font-weight:700; color:var(--navy);">Master plan pipeline</h3></div>
+      <table class="data-table">
+        <thead><tr><th>Master plan</th><th>Stage</th><th>Next milestone</th><th>Completion</th><th>Status</th></tr></thead>
+        <tbody>${PLANS.map(p=>`
+          <tr>
+            <td><b style="color:var(--navy);">${p.name}</b></td>
+            <td>${p.stage}</td>
+            <td style="color:var(--gray); font-size:12px;">${p.milestone}</td>
+            <td><div style="display:flex; align-items:center; gap:8px;"><div class="bar-bg" style="height:5px; width:120px;"><div class="bar-fill" style="width:${p.completion}%; background:var(--teal);"></div></div><span style="font-size:11px; font-weight:700;">${p.completion}%</span></div></td>
+            <td>${statusChip(p.sev)}</td>
+          </tr>
+        `).join('')}</tbody>
+      </table>
+    </div>
+    <div class="card">
+      <div style="padding:14px 22px; border-bottom:1px solid var(--grayLt);"><h3 style="font-size:13px; font-weight:700; color:var(--navy);">Regulatory approvals in motion</h3></div>
+      <table class="data-table">
+        <thead><tr><th>Authority</th><th>Subject</th><th>Status</th><th style="text-align:right;">Days open</th></tr></thead>
+        <tbody>${APPROVALS.sort((a,b)=>b.days-a.days).map(a=>`
+          <tr>
+            <td><b style="color:var(--navy);">${a.auth}</b></td>
+            <td>${a.subject}</td>
+            <td>${statusChip(a.sev)}</td>
+            <td style="text-align:right;"><b style="color:${severityColor(a.sev)};">${a.days}d</b></td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+/* FINANCE DEPARTMENT */
+function renderFinance(dept) {
+  const totalBudget = PROJECTS.reduce((a,p)=>a+p.budget,0);
+  const totalActual = PROJECTS.reduce((a,p)=>a+p.actual,0);
+  const totalCommitted = totalActual * 1.18;
+  const utilization = (totalActual/totalBudget)*100;
+
+  const variances = [
+    {type:'red', proj:'Hudayriyat Ph2', msg:'Committed 91%, but progress only 68% — material overrun risk forming'},
+    {type:'amber', proj:'Al Tamouh South', msg:'Schedule slippage +10w will push significant capex into next FY'},
+    {type:'amber', proj:'Reem Dev C12', msg:'Legal hold on leasing model — IRR forecast unreliable'},
+    {type:'red', proj:'Hudayriyat Ph2', msg:'VO-042 (AED 8.4M) pending — needs accrual decision by month-end'},
+    {type:'green', proj:'Reem Tower A', msg:'Retention release schedule clean — handover cash flow confirmed'},
+  ];
+
+  const variancesHTML = variances.map(a => `
+    <div style="display:flex; gap:10px; padding:11px 0; border-bottom:1px solid var(--grayLt);">
+      <span class="dot dot-${a.type}" style="margin-top:5px;"></span>
+      <div style="flex:1;">
+        <div style="font-size:10px; font-weight:700; color:var(--gray); letter-spacing:0.05em; text-transform:uppercase;">${a.proj}</div>
+        <div style="font-size:12px; color:var(--charcoal); margin-top:2px;">${a.msg}</div>
+      </div>
+    </div>`).join('');
+
+  const reconcileHTML = PROJECTS.map(p => {
+    const committedPct = Math.min(100, (p.actual/p.budget)*100 + 15);
+    const actualPct = (p.actual/p.budget)*100;
+    const variance = p.progress - actualPct;
+    return `
+      <div style="margin-bottom:14px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <div style="font-size:12px; font-weight:700; color:var(--navy);">${p.name} <span style="font-size:10px; color:var(--gray); font-weight:400;">${p.entity}</span></div>
+          <div style="font-size:11px; color:${Math.abs(variance)>5?'var(--amber)':'var(--gray)'};">${variance>=0?'+':''}${variance.toFixed(0)}pp progress vs. spend</div>
+        </div>
+        <div style="position:relative; height:24px; background:var(--grayLt); border-radius:3px; overflow:hidden;">
+          <div style="position:absolute; top:0; left:0; height:100%; width:${committedPct}%; background:var(--navy); opacity:0.3;"></div>
+          <div style="position:absolute; top:0; left:0; height:100%; width:${actualPct}%; background:var(--teal);"></div>
+          <div style="position:absolute; top:0; left:${p.progress}%; width:2px; height:100%; background:var(--amber);"></div>
+        </div>
+        <div style="display:flex; justify-content:space-between; font-size:10px; color:var(--gray); margin-top:3px;">
+          <span>Committed ${committedPct.toFixed(0)}% · Actual ${actualPct.toFixed(0)}%</span>
+          <span>Progress ${p.progress}%</span>
+        </div>
+      </div>`;
+  }).join('');
+
+  const byEntity = {};
+  PROJECTS.forEach(p => {
+    if (!byEntity[p.entity]) byEntity[p.entity] = {b:0,a:0};
+    byEntity[p.entity].b += p.budget;
+    byEntity[p.entity].a += p.actual;
+  });
+
+  const entityRows = Object.entries(byEntity).map(([ent,d]) => {
+    const u = (d.a/d.b)*100;
+    return `<tr><td><b>${ent}</b></td><td style="text-align:right;">${fmt.aedShort(d.b)}</td><td style="text-align:right;">${fmt.aedShort(d.a)}</td><td style="text-align:right;"><b style="color:${u>70?'var(--amber)':'var(--navy)'};">${u.toFixed(0)}%</b></td></tr>`;
+  }).join('');
+
+  return renderHomePageHeader(dept, 'Commitments, costs, and cash — reconciled.', 'Group-wide finance view across all entities · live alignment of commitments, actuals, accruals, and delivery progress') + `
+    <div class="grid grid-cols-4 gap-4 mb-6">
+      <div class="kpi-card"><div class="kpi-label">TOTAL BUDGET</div><div class="kpi-value">${fmt.aedShort(totalBudget)}</div><div class="kpi-sub">committed capital</div></div>
+      <div class="kpi-card"><div class="kpi-label">COMMITTED</div><div class="kpi-value">${fmt.aedShort(totalCommitted)}</div><div class="kpi-sub">incl. POs + accruals</div></div>
+      <div class="kpi-card"><div class="kpi-label">ACTUAL SPEND</div><div class="kpi-value">${fmt.aedShort(totalActual)}</div><div class="kpi-sub">${utilization.toFixed(0)}% utilized</div></div>
+      <div class="kpi-card"><div class="kpi-label">FORECAST ACCURACY</div><div class="kpi-value" style="color:var(--amber);">81%</div><div class="kpi-sub">target: 92%</div></div>
+    </div>
+    <div class="card mb-6" style="padding:20px 22px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+        <h3 style="font-size:13px; font-weight:700; color:var(--navy); margin:0;">Committed vs. Actual vs. Progress — by project</h3>
+        <div style="display:flex; gap:14px; font-size:11px;">
+          <span style="display:flex; align-items:center; gap:5px;"><div style="width:12px; height:12px; background:var(--navy); opacity:0.3; border-radius:2px;"></div>Committed</span>
+          <span style="display:flex; align-items:center; gap:5px;"><div style="width:12px; height:12px; background:var(--teal); border-radius:2px;"></div>Actual</span>
+          <span style="display:flex; align-items:center; gap:5px;"><div style="width:12px; height:12px; background:var(--amber); border-radius:2px;"></div>Progress</span>
+        </div>
+      </div>
+      ${reconcileHTML}
+    </div>
+    <div class="grid grid-cols-2 gap-4">
+      <div class="card" style="padding:20px 22px;">
+        <h3 style="font-size:13px; font-weight:700; color:var(--navy); margin-bottom:10px;">Entity consolidation</h3>
+        <table class="data-table" style="font-size:12px;">
+          <thead><tr><th>Entity</th><th style="text-align:right;">Budget</th><th style="text-align:right;">Actual</th><th style="text-align:right;">Util</th></tr></thead>
+          <tbody>
+            ${entityRows}
+            <tr style="background:var(--tealXLt);"><td><b>GROUP TOTAL</b></td><td style="text-align:right;"><b>${fmt.aedShort(totalBudget)}</b></td><td style="text-align:right;"><b>${fmt.aedShort(totalActual)}</b></td><td style="text-align:right;"><b>${utilization.toFixed(0)}%</b></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card" style="padding:20px 22px;">
+        <h3 style="font-size:13px; font-weight:700; color:var(--navy); margin-bottom:6px;">Variance alerts</h3>
+        <div style="font-size:11px; color:var(--gray); margin-bottom:6px;">Where finance is out of step with delivery reality</div>
+        ${variancesHTML}
+      </div>
+    </div>`;
+}
+
+/* =============================================================
+   RENDER DISPATCHER
+   ============================================================= */
+function render() {
+  renderSidebar();
+
+  // Update sidebar user info
+  const userNameEl = document.getElementById('sidebar-username');
+  const userRoleEl = document.getElementById('sidebar-userrole');
+  const avatarEl = document.getElementById('sidebar-avatar');
+  if (userNameEl) userNameEl.textContent = STATE.user.name || 'User';
+  if (userRoleEl) userRoleEl.textContent = 'BRIDG8 user';
+  if (avatarEl) avatarEl.textContent = STATE.user.initials || 'U';
+
+  const route = getRoute();
+  const deptId = route[0] || (STATE.user.dept || 'ceo');
+  const dept = DEPARTMENTS.find(d => d.id === deptId);
+  let html = '';
+
+  if (!dept) {
+    document.getElementById('main').innerHTML = '<div class="card card-pad">Department not found.</div>';
+    renderBreadcrumb([]);
+    return;
+  }
+
+  // Drill-down routes
+  if (route[1] === 'projects' && route[2]) {
+    if (route[3] === 'items' && route[4]) {
+      html = renderItemDetail(deptId, route[2], route[4]);
+    } else if (route[3] === 'audit') {
+      html = renderAuditTrail(deptId, route[2]);
+    } else {
+      html = renderProjectDetail(deptId, route[2]);
+    }
+  } else {
+    // Department home
+    if      (deptId === 'ceo')         html = renderCEO(dept);
+    else if (deptId === 'delivery')    html = renderDelivery(dept);
+    else if (deptId === 'design')      html = renderDesign(dept);
+    else if (deptId === 'development') html = renderDevelopment(dept);
+    else if (deptId === 'finance')     html = renderFinance(dept);
+    else if (deptId === 'legal')       html = renderLegal(dept);
+    else if (deptId === 'marketing')   html = renderMarketing(dept);
+    else if (deptId === 'procurement') html = renderProcurementDept(dept);
+    else if (deptId === 'stakeholder') html = renderStakeholder(dept);
+    else if (deptId === 'visioning')   html = renderVisioning(dept);
+    else html = '<div class="card card-pad">Coming soon.</div>';
+  }
+
+  document.getElementById('main').innerHTML = `<div class="page-fade">${html}</div>`;
+  window.scrollTo({ top: 0 });
+}
+
+/* =============================================================
+   STATE MUTATIONS
+   ============================================================= */
+function resolveItem(projectId, itemId) {
+  STATE.resolvedItems.add(itemId);
+  showToast({
+    type: 'green',
+    eyebrow: 'RESOLVED',
+    title: 'Item marked complete',
+    body: 'BRIDG8 will update the executive heatmap and notify the PM.'
+  });
+  setTimeout(() => render(), 200);
+}
+
+/* =============================================================
+   REPLAY ESCALATION ANIMATION
+   Animates each timeline step appearing one at a time.
+   ============================================================= */
+let _replayTimer = null;
+function replayEscalation() {
+  const timelineEl = document.querySelector('.timeline');
+  if (!timelineEl) return;
+  const items = Array.from(timelineEl.querySelectorAll('.timeline-item'));
+  if (items.length === 0) return;
+
+  // Clear any prior replay
+  if (_replayTimer) { clearTimeout(_replayTimer); _replayTimer = null; }
+  items.forEach(el => el.classList.remove('replay-active', 'replay-done'));
+  document.getElementById('replay-banner')?.remove();
+
+  // Insert banner above the timeline card header
+  const card = timelineEl.closest('.card');
+  if (card) {
+    const banner = document.createElement('div');
+    banner.id = 'replay-banner';
+    banner.className = 'replay-banner';
+    banner.innerHTML = `
+      <div class="replay-banner-text">
+        <b>▶ Replaying escalation sequence</b>
+        Watch how BRIDG8 escalated this item over time.
+      </div>
+      <div class="replay-day-counter" id="replay-day">DAY 0</div>
+    `;
+    card.parentNode.insertBefore(banner, card);
+  }
+
+  timelineEl.classList.add('replaying');
+
+  // Compute total days from data-times in the items (read from text)
+  // Step durations - reveal each ~1.4s apart
+  const stepDelay = 1400;
+  const totalDuration = items.length * stepDelay;
+
+  items.forEach((item, idx) => {
+    setTimeout(() => {
+      // Mark previous steps as done
+      items.forEach((other, j) => {
+        if (j < idx) other.classList.add('replay-done');
+        else other.classList.remove('replay-done');
+      });
+      // Mark this step active
+      items.forEach(other => other.classList.remove('replay-active'));
+      item.classList.add('replay-active');
+
+      // Update day counter from the time label (e.g. "12d ago" or "today")
+      const timeStr = (item.querySelector('.timeline-time')?.textContent || '').trim();
+      const dayCounter = document.getElementById('replay-day');
+      if (dayCounter) {
+        const m = timeStr.match(/(\d+)D AGO/);
+        if (m) {
+          dayCounter.textContent = `DAY ${m[1]} AGO`;
+        } else if (timeStr === 'TODAY') {
+          dayCounter.textContent = `TODAY`;
+        } else {
+          dayCounter.textContent = timeStr;
+        }
+      }
+    }, idx * stepDelay);
+  });
+
+  // Cleanup after final step
+  _replayTimer = setTimeout(() => {
+    timelineEl.classList.remove('replaying');
+    items.forEach(el => el.classList.remove('replay-active', 'replay-done'));
+    document.getElementById('replay-banner')?.remove();
+    showToast({ type: 'teal', eyebrow: 'REPLAY COMPLETE', title: 'Escalation sequence finished', body: 'Every step time-stamped. Audit-ready.' });
+    _replayTimer = null;
+  }, totalDuration + 1200);
+}
+
+/* =============================================================
+   GUIDED TOUR / WALKTHROUGH
+   ============================================================= */
+const TOUR_STEPS = [
+  {
+    target: '.sidebar-brand',
+    eyebrow: 'STEP 1',
+    title: 'Welcome to BRIDG8',
+    body: 'BRIDG8 is the platform that bridges every Modon function — Finance, Legal, Procurement, Design — into Project Delivery. Let\'s take a quick tour.',
+    placement: 'right'
+  },
+  {
+    target: '.sidebar-nav',
+    eyebrow: 'STEP 2',
+    title: '10 departments, one platform',
+    body: 'Every department has its own dashboard tailored to what they need to see. Switch between them anytime — the data is shared, the views are role-specific.',
+    placement: 'right'
+  },
+  {
+    target: '.kpi-grid, .grid.grid-cols-4',
+    eyebrow: 'STEP 3',
+    title: 'KPIs that update live',
+    body: 'Key metrics surface instantly — committed capital, projects at risk, open actions. Click any project below to drill into the details.',
+    placement: 'bottom'
+  },
+  {
+    target: '.project-grid, .grid.grid-cols-3',
+    eyebrow: 'STEP 4',
+    title: 'Drill into any project',
+    body: 'Click a project card to see the full Project Delivery view, including the BRIDG8 hero panel — every item the PM is waiting for, from every other function.',
+    placement: 'top',
+    action: () => {
+      const card = document.querySelector('.project-card');
+      if (card) card.click();
+    }
+  },
+  {
+    target: '.hero-panel',
+    eyebrow: 'STEP 5',
+    title: '★ The BRIDG8 Moment',
+    body: 'This is where BRIDG8 earns its name. Every blocker the PM would have to chase — from Finance, Legal, Procurement, Design — is here. Visible. Time-stamped. Accountable.',
+    placement: 'bottom',
+    action: () => {
+      const row = document.querySelector('.pending-row');
+      if (row) row.click();
+    }
+  },
+  {
+    target: '.timeline',
+    eyebrow: 'STEP 6',
+    title: 'Full escalation trail',
+    body: 'Every BRIDG8 action — auto-reminder, escalation, surfacing on the heatmap — is time-stamped and traceable. Try the "Replay escalation" button to see it animate.',
+    placement: 'left'
+  },
+  {
+    target: '.tour-trigger',
+    eyebrow: 'TOUR COMPLETE',
+    title: 'You\'re ready.',
+    body: 'Click any department in the sidebar to explore. The tour button is always here if you want to come back.',
+    placement: 'bottom',
+    isLast: true
+  },
+];
+
+let _tourIdx = 0;
+let _tourActive = false;
+
+function startTour() {
+  _tourIdx = 0;
+  _tourActive = true;
+  // Start from CEO if not already there (first 3 steps assume portfolio view)
+  const route = getRoute();
+  if (route[1] === 'projects' || (route[0] !== 'ceo' && route[0] !== 'delivery')) {
+    navigate('#/ceo');
+    setTimeout(showTourStep, 350);
+  } else {
+    showTourStep();
+  }
+}
+
+function showTourStep() {
+  if (!_tourActive) return;
+  if (_tourIdx >= TOUR_STEPS.length) { endTour(); return; }
+  const step = TOUR_STEPS[_tourIdx];
+
+  // Find target — try each selector in the comma-separated list
+  let target = null;
+  for (const sel of step.target.split(',')) {
+    target = document.querySelector(sel.trim());
+    if (target) break;
+  }
+  if (!target) {
+    // Skip steps whose target isn't on this page
+    _tourIdx++;
+    showTourStep();
+    return;
+  }
+
+  // Scroll target into view
+  target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+  setTimeout(() => {
+    drawTourOverlay(target, step);
+  }, 300);
+}
+
+function drawTourOverlay(target, step) {
+  // Remove any existing overlay
+  document.getElementById('tour-overlay')?.remove();
+
+  const rect = target.getBoundingClientRect();
+  const padding = 8;
+
+  const overlay = document.createElement('div');
+  overlay.id = 'tour-overlay';
+  overlay.className = 'tour-overlay';
+  overlay.innerHTML = `
+    <div class="tour-spotlight" style="
+      top: ${rect.top - padding}px;
+      left: ${rect.left - padding}px;
+      width: ${rect.width + padding*2}px;
+      height: ${rect.height + padding*2}px;
+    "></div>
+    <div class="tour-tooltip" id="tour-tooltip">
+      <div class="tour-tooltip-eyebrow">${step.eyebrow}</div>
+      <div class="tour-tooltip-title">${step.title}</div>
+      <div class="tour-tooltip-body">${step.body}</div>
+      <div class="tour-tooltip-footer">
+        <div class="tour-progress">
+          ${TOUR_STEPS.map((_, i) => `<div class="tour-progress-dot ${i === _tourIdx ? 'active' : ''}"></div>`).join('')}
+        </div>
+        <div class="tour-actions">
+          ${!step.isLast ? '<button class="tour-btn tour-btn-skip" onclick="endTour()">Skip tour</button>' : ''}
+          <button class="tour-btn tour-btn-next" onclick="nextTourStep()">${step.isLast ? 'Got it' : 'Next →'}</button>
+        </div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  // Position tooltip
+  const tt = document.getElementById('tour-tooltip');
+  const ttW = 320, ttH = 200;
+  let top, left;
+  switch (step.placement || 'bottom') {
+    case 'right':
+      top = rect.top + rect.height/2 - ttH/2;
+      left = rect.right + 16;
+      break;
+    case 'left':
+      top = rect.top + rect.height/2 - ttH/2;
+      left = rect.left - ttW - 16;
+      break;
+    case 'top':
+      top = rect.top - ttH - 16;
+      left = rect.left + rect.width/2 - ttW/2;
+      break;
+    case 'bottom':
+    default:
+      top = rect.bottom + 16;
+      left = rect.left + rect.width/2 - ttW/2;
+  }
+  // Clamp to viewport
+  top = Math.max(16, Math.min(top, window.innerHeight - ttH - 16));
+  left = Math.max(16, Math.min(left, window.innerWidth - ttW - 16));
+  tt.style.top = top + 'px';
+  tt.style.left = left + 'px';
+}
+
+function nextTourStep() {
+  const step = TOUR_STEPS[_tourIdx];
+  if (step.isLast) { endTour(); return; }
+
+  // Run any side effect to set up next step
+  if (step.action) {
+    step.action();
+    document.getElementById('tour-overlay')?.remove();
+    setTimeout(() => {
+      _tourIdx++;
+      showTourStep();
+    }, 600);
+  } else {
+    _tourIdx++;
+    showTourStep();
+  }
+}
+
+function endTour() {
+  _tourActive = false;
+  _tourIdx = 0;
+  document.getElementById('tour-overlay')?.remove();
+}
+
+/* =============================================================
+   LANGUAGE TOGGLE (EN / AR) + RTL
+   ============================================================= */
+const TRANSLATIONS = {
+  // Department names
+  "CEO's Office":                "مكتب الرئيس التنفيذي",
+  "Delivery":                    "التسليم",
+  "Design Management":           "إدارة التصميم",
+  "Development":                 "التطوير",
+  "Finance Department":          "الإدارة المالية",
+  "Legal Department":            "الإدارة القانونية",
+  "Marketing":                   "التسويق",
+  "Procurement Department":      "إدارة المشتريات",
+  "Stakeholder Management":      "إدارة الجهات المعنية",
+  "Visioning & Master Planning": "التخطيط الرئيسي والرؤية",
+  // Sidebar / nav
+  "Departments":  "الإدارات",
+  "Search…":     "بحث...",
+  "BRIDG8 user":  "مستخدم BRIDG8",
+  "Sign out":     "تسجيل الخروج",
+  "Live":         "مباشر",
+  "Take the tour": "ابدأ الجولة",
+  // Page headers - CEO
+  "Group portfolio health — at a glance.": "صحة المحفظة المؤسسية — في لمحة.",
+  "Portfolio heatmap":               "خريطة المحفظة الحرارية",
+  "Top risks requiring executive intervention": "أهم المخاطر التي تتطلب تدخلاً تنفيذياً",
+  "Capital exposure by entity":      "التعرض الرأسمالي حسب الكيان",
+  "COMMITTED CAPITAL":               "رأس المال الملتزم به",
+  "SPEND TO DATE":                   "الإنفاق حتى الآن",
+  "PROJECTS AT RISK":                "مشاريع معرضة للخطر",
+  "OPEN ACTIONS":                    "إجراءات مفتوحة",
+  // Status / chips
+  "AT RISK":  "في خطر",
+  "WATCH":    "مراقبة",
+  "ON TRACK": "في المسار",
+  "CRITICAL": "حرج",
+  // Common buttons
+  "Mark resolved":      "تم الحل",
+  "Replay escalation":  "إعادة عرض التصعيد",
+  "Audit trail":        "سجل التدقيق",
+  "Skip tour":          "تخطي الجولة",
+  "Next →":             "التالي →",
+  "Got it":             "حسناً",
+  // Hero panel
+  "★ THE BRIDG8 MOMENT":          "★ لحظة BRIDG8",
+  "Pending from other functions": "معلق من الإدارات الأخرى",
+  "OPEN ITEMS":                   "بنود مفتوحة",
+};
+
+let _currentLang = 'en';
+
+function setLang(lang) {
+  _currentLang = lang;
+  document.body.dir = lang === 'ar' ? 'rtl' : 'ltr';
+  document.documentElement.lang = lang;
+
+  // Update toggle UI
+  document.querySelectorAll('.lang-toggle button').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.lang === lang);
+  });
+
+  // Apply translations to all text nodes that match keys
+  applyTranslations(lang);
+
+  // Re-render to apply to dynamic content
+  render();
+  showToast({
+    type: 'teal',
+    eyebrow: lang === 'ar' ? 'اللغة' : 'LANGUAGE',
+    title: lang === 'ar' ? 'تم تغيير اللغة إلى العربية' : 'Language switched to English',
+    body: lang === 'ar' ? 'تم تطبيق التخطيط من اليمين إلى اليسار.' : 'Layout reflowed left-to-right.'
+  });
+}
+
+function applyTranslations(lang) {
+  if (lang === 'en') {
+    // Restore from data-en attributes if we stored them
+    document.querySelectorAll('[data-en]').forEach(el => {
+      el.textContent = el.dataset.en;
+    });
+    return;
+  }
+  // Walk all text nodes and translate matches
+  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+  const nodes = [];
+  let n;
+  while ((n = walker.nextNode())) nodes.push(n);
+  nodes.forEach(node => {
+    const txt = node.textContent.trim();
+    if (TRANSLATIONS[txt]) {
+      // store original for later restore
+      const parent = node.parentNode;
+      if (parent && !parent.dataset.en) parent.dataset.en = txt;
+      node.textContent = node.textContent.replace(txt, TRANSLATIONS[txt]);
+    }
+  });
+}
+
+function tr(s) {
+  return _currentLang === 'ar' && TRANSLATIONS[s] ? TRANSLATIONS[s] : s;
+}
+
+/* =============================================================
+   WHAT-IF SCENARIO SIMULATOR
+   ============================================================= */
+let _whatifItem = null;
+
+function openWhatIf(itemId) {
+  // Find the item across all projects
+  let found = null;
+  for (const p of PROJECTS) {
+    const it = p.pending.find(x => x.id === itemId);
+    if (it) { found = { item: it, project: p }; break; }
+  }
+  if (!found) return;
+  _whatifItem = found;
+  renderWhatIf(found.item.days);
+}
+
+function renderWhatIf(daysToResolve) {
+  if (!_whatifItem) return;
+  const { item, project } = _whatifItem;
+  const baseDays = item.days;
+  // Net delay impact = days beyond current
+  const additionalDays = Math.max(0, daysToResolve - baseDays);
+  const slippageWeeks = (additionalDays / 7).toFixed(1);
+  const standbyAED = additionalDays * 180; // AED ~180K/week stand-by from VO-042 narrative; approximated daily
+  const handoverImpact = additionalDays > 0 ? `Q4 2026 → Q1 2027 (≈${slippageWeeks}w slippage)` : 'No additional handover impact';
+
+  let cards = '';
+  // Scenario severity scaling
+  if (additionalDays === 0) {
+    cards = `
+      <div class="whatif-impact-card">
+        <div class="whatif-impact-eyebrow">SCENARIO: NO CHANGE</div>
+        <div class="whatif-impact-title">Resolved on current trajectory</div>
+        <div class="whatif-impact-body">Item closes today as projected. Schedule confidence holds. No additional accrual exposure.</div>
+      </div>`;
+  } else if (additionalDays <= 7) {
+    cards = `
+      <div class="whatif-impact-card amber">
+        <div class="whatif-impact-eyebrow">SCHEDULE IMPACT</div>
+        <div class="whatif-impact-title">+${slippageWeeks} week slippage on critical path</div>
+        <div class="whatif-impact-body">Downstream contractor mobilization shifts by ${additionalDays} days. ${item.dept === 'Finance' ? 'Stand-by costs estimated at AED ' + (standbyAED/1000).toFixed(2) + 'M.' : 'Workaround possible if alternate scope is sequenced.'}</div>
+      </div>
+      <div class="whatif-impact-card">
+        <div class="whatif-impact-eyebrow">RECOVERY OPTIONS</div>
+        <div class="whatif-impact-title">Mitigation paths available</div>
+        <div class="whatif-impact-body">Acceleration on parallel work packages can recover up to 60% of the delay. Approve immediately to retain handover commitment.</div>
+      </div>`;
+  } else if (additionalDays <= 21) {
+    cards = `
+      <div class="whatif-impact-card red">
+        <div class="whatif-impact-eyebrow">SCHEDULE IMPACT — CRITICAL</div>
+        <div class="whatif-impact-title">${handoverImpact}</div>
+        <div class="whatif-impact-body">Forecast handover slips by ${slippageWeeks} weeks. Stand-by &amp; idle-cost exposure reaches AED ${(standbyAED/1000).toFixed(2)}M.</div>
+      </div>
+      <div class="whatif-impact-card amber">
+        <div class="whatif-impact-eyebrow">DOWNSTREAM TRIGGERS</div>
+        <div class="whatif-impact-title">3 additional functions become blocked</div>
+        <div class="whatif-impact-body">Procurement (façade ETAs), Design (next-package RFIs), and Site (sequenced subcontractors) all slip. BRIDG8 will auto-flag each.</div>
+      </div>`;
+  } else {
+    cards = `
+      <div class="whatif-impact-card red">
+        <div class="whatif-impact-eyebrow">SEVERE — BOARD ESCALATION</div>
+        <div class="whatif-impact-title">Handover at risk · ${slippageWeeks}w slippage</div>
+        <div class="whatif-impact-body">Project moves from AT RISK to RED-FLAGGED on the executive heatmap. Stand-by and re-mobilization costs estimated AED ${(standbyAED/1000).toFixed(2)}M+. Board notification triggered automatically.</div>
+      </div>
+      <div class="whatif-impact-card amber">
+        <div class="whatif-impact-eyebrow">CONTRACT EXPOSURE</div>
+        <div class="whatif-impact-title">Vendor LD claim window opens</div>
+        <div class="whatif-impact-body">Beyond 21 days, contractors enter delay claim eligibility. BRIDG8 routes to Legal queue for pre-emptive review.</div>
+      </div>`;
+  }
+
+  const html = `
+    <div class="whatif-backdrop" onclick="if(event.target===this)closeWhatIf()">
+      <div class="whatif-modal">
+        <div class="whatif-header">
+          <div>
+            <div class="whatif-eyebrow">WHAT-IF SIMULATOR</div>
+            <div class="whatif-title">${item.title}</div>
+            <div style="font-size: 11px; color: var(--gray); margin-top: 4px;">${project.name} · current age: ${baseDays} days</div>
+          </div>
+          <button class="whatif-close" onclick="closeWhatIf()" aria-label="Close">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+        <div class="whatif-body">
+          <div class="whatif-presets">
+            <button class="whatif-preset ${daysToResolve===baseDays?'active':''}" onclick="renderWhatIf(${baseDays})">Resolved today</button>
+            <button class="whatif-preset ${daysToResolve===baseDays+7?'active':''}" onclick="renderWhatIf(${baseDays+7})">+1 week</button>
+            <button class="whatif-preset ${daysToResolve===baseDays+14?'active':''}" onclick="renderWhatIf(${baseDays+14})">+2 weeks</button>
+            <button class="whatif-preset ${daysToResolve===baseDays+30?'active':''}" onclick="renderWhatIf(${baseDays+30})">+1 month</button>
+          </div>
+          <div class="whatif-slider-row">
+            <div class="whatif-slider-label">
+              <div class="lbl">DAYS TO RESOLUTION</div>
+              <div class="val">${daysToResolve} days</div>
+            </div>
+            <input type="range" class="whatif-slider"
+                   min="${baseDays}" max="${baseDays+45}" value="${daysToResolve}"
+                   oninput="renderWhatIf(parseInt(this.value))">
+          </div>
+          <div class="whatif-impact">${cards}</div>
+        </div>
+      </div>
+    </div>
+  `;
+  let root = document.getElementById('whatif-root');
+  if (!root) {
+    root = document.createElement('div');
+    root.id = 'whatif-root';
+    document.body.appendChild(root);
+  }
+  root.innerHTML = html;
+}
+
+function closeWhatIf() {
+  const root = document.getElementById('whatif-root');
+  if (root) root.innerHTML = '';
+  _whatifItem = null;
+}
+
+/* =============================================================
+   ONBOARDING WIZARD (first-login)
+   ============================================================= */
+let _hasOnboarded = false;
+
+function showOnboarding() {
+  if (_hasOnboarded) return;
+  const dept = DEPARTMENTS.find(d => d.id === STATE.user.dept) || DEPARTMENTS[0];
+  const html = `
+    <div class="onboard-backdrop" id="onboard-backdrop">
+      <div class="onboard-modal">
+        <div class="onboard-hero">
+          <div class="onboard-hero-eyebrow">WELCOME TO BRIDG8</div>
+          <div class="onboard-hero-title">You're set up, ${dept.name.replace(/'s.*/, '')}.</div>
+          <div class="onboard-hero-sub">Three things to know before you start exploring.</div>
+        </div>
+        <div class="onboard-body">
+          <div class="onboard-step">
+            <div class="onboard-step-num">1</div>
+            <div class="onboard-step-text">
+              <div class="onboard-step-title">Your dashboard is in the sidebar.</div>
+              <div class="onboard-step-body">${dept.name} is highlighted on the left. Click any other department to see its view — the data is shared, the lens is different.</div>
+            </div>
+          </div>
+          <div class="onboard-step">
+            <div class="onboard-step-num">2</div>
+            <div class="onboard-step-text">
+              <div class="onboard-step-title">Click any project to drill in.</div>
+              <div class="onboard-step-body">Project cards open the full Project Delivery view, including the BRIDG8 hero panel — every blocker, every owner, time-stamped.</div>
+            </div>
+          </div>
+          <div class="onboard-step">
+            <div class="onboard-step-num">3</div>
+            <div class="onboard-step-text">
+              <div class="onboard-step-title">Try the guided tour.</div>
+              <div class="onboard-step-body">A "Take the tour" button is in the top bar. Walks you through the platform in 7 quick steps — perfect for your first 2 minutes.</div>
+            </div>
+          </div>
+        </div>
+        <div class="onboard-actions">
+          <button class="onboard-skip" onclick="dismissOnboarding()">Skip — I'll explore on my own</button>
+          <button class="onboard-cta" onclick="dismissOnboarding(); startTour();">Start the tour →</button>
+        </div>
+      </div>
+    </div>
+  `;
+  const root = document.createElement('div');
+  root.id = 'onboard-root';
+  root.innerHTML = html;
+  document.body.appendChild(root);
+}
+
+function dismissOnboarding() {
+  _hasOnboarded = true;
+  document.getElementById('onboard-root')?.remove();
+}
+
+/* =============================================================
+   MOBILE DRAWER TOGGLE
+   ============================================================= */
+function toggleMobileSidebar() {
+  const sb = document.getElementById('sidebar');
+  const bd = document.getElementById('mobile-backdrop');
+  if (!sb || !bd) return;
+  sb.classList.toggle('mobile-open');
+  bd.classList.toggle('show');
+}
+// Close drawer when navigating
+window.addEventListener('hashchange', () => {
+  const sb = document.getElementById('sidebar');
+  const bd = document.getElementById('mobile-backdrop');
+  if (sb && sb.classList.contains('mobile-open')) {
+    sb.classList.remove('mobile-open');
+    bd?.classList.remove('show');
+  }
+});
+
+/* =============================================================
+   NOTIFICATIONS
+   ============================================================= */
+function showToast({ type='teal', eyebrow='UPDATE', title, body }) {
+  const c = document.getElementById('toast-container');
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = `
+    <div class="toast-eyebrow">${eyebrow}</div>
+    <div class="toast-title">${title}</div>
+    <div class="toast-body">${body}</div>
+  `;
+  c.appendChild(el);
+  setTimeout(() => {
+    el.classList.add('fade-out');
+    setTimeout(() => el.remove(), 300);
+  }, 4500);
+}
+
+function renderNotifPanel() {
+  const open = STATE.notifications.filter(n => !STATE.acknowledgedNotifs.has(n.id));
+  document.getElementById('notif-badge').textContent = open.length;
+  document.getElementById('notif-badge').style.display = open.length > 0 ? 'flex' : 'none';
+
+  const html = STATE.notifications.length === 0
+    ? '<div style="padding:24px; text-align:center; color:var(--gray); font-size:12px;">No notifications</div>'
+    : STATE.notifications.map(n => `
+        <div class="notif-item">
+          <span class="dot dot-${n.type}"></span>
+          <div>
+            <div class="notif-eyebrow">${n.dept}</div>
+            <div class="notif-title">${n.title}</div>
+            <div style="font-size:11px; color:var(--gray); margin-top:2px;">${n.body}</div>
+            <div class="notif-time" style="margin-top:4px;">${n.time}</div>
+          </div>
+        </div>
+      `).join('');
+  document.getElementById('notif-body').innerHTML = html;
+}
+
+function toggleNotifPanel() {
+  document.getElementById('notif-panel').classList.toggle('show');
+}
+
+function clearNotifs() {
+  STATE.notifications.forEach(n => STATE.acknowledgedNotifs.add(n.id));
+  STATE.notifications = [];
+  renderNotifPanel();
+  toggleNotifPanel();
+}
+
+/* Simulate live notifications */
+function startLiveSimulation() {
+  STATE.notifications = [...SAMPLE_NOTIFS];
+  renderNotifPanel();
+
+  // Periodic toasts to feel "alive"
+  const teasers = [
+    { type:'teal',  eyebrow:'BRIDG8',  title:'Hudayriyat Ph2 — data refresh complete', body:'7 pending items synced with Finance and Procurement systems.' },
+    { type:'amber', eyebrow:'WATCH',   title:'Façade panel ETA at risk',                body:'Vendor confirmation overdue by 2 days. Auto-reminder sent.' },
+    { type:'red',   eyebrow:'CRITICAL', title:'New escalation on VO-042',              body:'Threshold of 12 days exceeded. Routed to CFO queue.' },
+  ];
+  let i = 0;
+  setInterval(() => {
+    if (i < teasers.length) {
+      showToast(teasers[i]);
+      i++;
+    }
+  }, 12000);
+}
+
+/* =============================================================
+   AUTH & BOOT
+   ============================================================= */
+function quickLogin(deptId) {
+  const d = DEPARTMENTS.find(x => x.id === deptId) || DEPARTMENTS[0];
+  STATE.user = { dept: d.id, name: d.name, initials: d.initials };
+  enterApp(d.id);
+}
+
+function completeLogin() {
+  quickLogin('ceo');
+}
+
+function enterApp(deptId) {
+  document.getElementById('login').classList.remove('show');
+  setTimeout(() => {
+    document.getElementById('login').style.display = 'none';
+    document.getElementById('app').style.display = 'flex';
+    setTimeout(() => document.getElementById('app').classList.add('show'), 50);
+    window.location.hash = `#/${deptId}`;
+    render();
+    setTimeout(startLiveSimulation, 800);
+    // Show onboarding wizard on first login
+    setTimeout(() => { if (!_hasOnboarded) showOnboarding(); }, 1500);
+  }, 400);
+}
+
+function logout() {
+  document.getElementById('app').classList.remove('show');
+  setTimeout(() => {
+    document.getElementById('app').style.display = 'none';
+    document.getElementById('login').style.display = 'flex';
+    setTimeout(() => document.getElementById('login').classList.add('show'), 50);
+  }, 300);
+}
+
+function showLogin() {
+  document.getElementById('splash').classList.add('fade-out');
+  setTimeout(() => {
+    document.getElementById('login').style.display = 'flex';
+    setTimeout(() => document.getElementById('login').classList.add('show'), 50);
+  }, 600);
+}
+
+/* Boot sequence */
+window.addEventListener('load', () => {
+  renderLoginGrid();
+  setTimeout(showLogin, 2400);
+});
+
+/* Click outside notification panel closes it */
+document.addEventListener('click', (e) => {
+  const panel = document.getElementById('notif-panel');
+  const bell = document.getElementById('notif-bell');
+  if (panel && bell && !panel.contains(e.target) && !bell.contains(e.target)) {
+    panel.classList.remove('show');
+  }
+});
+</script>
+</body>
+</html>
