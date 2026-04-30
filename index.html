@@ -1292,6 +1292,172 @@
     cursor: pointer; transition: background 0.15s;
   }
   .onboard-cta:hover { background: var(--navyLt); }
+
+  /* ============ AI ASSISTANT ============ */
+  /* Full-page chat */
+  .ai-page { display: flex; flex-direction: column; height: calc(100vh - 200px); min-height: 600px; }
+  .ai-chat-container {
+    flex: 1; display: flex; flex-direction: column;
+    background: var(--white); border: 1px solid var(--grayLt);
+    border-radius: 8px; overflow: hidden;
+    box-shadow: 0 1px 2px rgba(14,40,65,0.04);
+  }
+  .ai-messages {
+    flex: 1; overflow-y: auto; padding: 24px;
+    display: flex; flex-direction: column; gap: 16px;
+    scroll-behavior: smooth;
+  }
+  .ai-message { max-width: 85%; display: flex; gap: 10px; }
+  .ai-message.user { align-self: flex-end; flex-direction: row-reverse; }
+  .ai-message-avatar {
+    width: 30px; height: 30px; border-radius: 50%;
+    flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 800;
+  }
+  .ai-message.assistant .ai-message-avatar {
+    background: linear-gradient(135deg, var(--teal), var(--tealDk));
+    color: var(--white);
+  }
+  .ai-message.user .ai-message-avatar { background: var(--navy); color: var(--white); }
+  .ai-message-bubble {
+    padding: 12px 16px; border-radius: 12px;
+    font-size: 13px; line-height: 1.55; color: var(--charcoal);
+  }
+  .ai-message.assistant .ai-message-bubble {
+    background: var(--tealXLt); border: 1px solid var(--tealLt);
+    border-top-left-radius: 4px;
+  }
+  .ai-message.user .ai-message-bubble {
+    background: var(--navy); color: var(--white);
+    border-top-right-radius: 4px;
+  }
+  .ai-message-bubble strong { color: var(--navy); font-weight: 700; }
+  .ai-message.user .ai-message-bubble strong { color: var(--white); }
+  .ai-message-bubble ul { margin: 6px 0 0 18px; padding: 0; }
+  .ai-message-bubble li { margin: 3px 0; }
+  .ai-typing { display: flex; gap: 4px; padding: 8px; }
+  .ai-typing-dot {
+    width: 6px; height: 6px; border-radius: 50%; background: var(--tealDk);
+    animation: typingPulse 1.2s infinite;
+  }
+  .ai-typing-dot:nth-child(2) { animation-delay: 0.2s; }
+  .ai-typing-dot:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes typingPulse {
+    0%, 100% { opacity: 0.3; transform: scale(0.85); }
+    50%      { opacity: 1; transform: scale(1.1); }
+  }
+
+  .ai-suggestions {
+    padding: 14px 18px;
+    border-top: 1px solid var(--grayLt);
+    background: var(--grayXLt);
+    display: flex; gap: 8px; flex-wrap: wrap;
+  }
+  .ai-suggestion {
+    padding: 7px 12px; border-radius: 16px;
+    background: var(--white); border: 1px solid var(--grayLt);
+    font-size: 11px; font-weight: 600; cursor: pointer;
+    color: var(--charcoal); font-family: inherit;
+    transition: all 0.15s;
+  }
+  .ai-suggestion:hover { background: var(--tealXLt); border-color: var(--teal); color: var(--tealDk); }
+
+  .ai-input-bar {
+    display: flex; gap: 10px; padding: 14px 18px;
+    border-top: 1px solid var(--grayLt);
+  }
+  .ai-input {
+    flex: 1; background: var(--white);
+    border: 1.5px solid var(--grayLt); border-radius: 22px;
+    padding: 10px 16px; font-size: 13px; font-family: inherit;
+    color: var(--charcoal);
+    transition: border-color 0.15s;
+  }
+  .ai-input:focus { outline: none; border-color: var(--teal); }
+  .ai-send {
+    background: var(--navy); color: var(--white); border: none;
+    width: 40px; height: 40px; border-radius: 50%;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s;
+  }
+  .ai-send:hover { background: var(--navyLt); }
+  .ai-send:disabled { background: var(--grayLt); cursor: not-allowed; }
+
+  .ai-mock-banner {
+    background: var(--amberLt); color: var(--amber);
+    padding: 8px 14px; border-radius: 4px;
+    font-size: 11px; font-weight: 600;
+    display: inline-flex; align-items: center; gap: 6px;
+    margin-bottom: 14px;
+  }
+
+  /* Floating bubble */
+  .ai-bubble {
+    position: fixed;
+    bottom: 24px; right: 24px;
+    z-index: 65;
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--teal), var(--tealDk));
+    color: var(--white);
+    border: none; cursor: pointer;
+    box-shadow: 0 8px 24px rgba(91,158,142,0.45), 0 2px 6px rgba(0,0,0,0.15);
+    display: flex; align-items: center; justify-content: center;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .ai-bubble:hover { transform: translateY(-2px) scale(1.04); box-shadow: 0 12px 32px rgba(91,158,142,0.55); }
+  .ai-bubble.has-update::after {
+    content: ''; position: absolute; top: 4px; right: 4px;
+    width: 12px; height: 12px; border-radius: 50%;
+    background: var(--red); border: 2px solid var(--white);
+    animation: pulseDot 2s ease-in-out infinite;
+  }
+  body[dir="rtl"] .ai-bubble { right: auto; left: 24px; }
+
+  /* Floating chat panel */
+  .ai-floater {
+    position: fixed;
+    bottom: 92px; right: 24px;
+    z-index: 64;
+    width: 380px; max-width: calc(100vw - 32px);
+    height: 540px; max-height: calc(100vh - 140px);
+    background: var(--white); border-radius: 12px;
+    box-shadow: 0 24px 56px rgba(14,40,65,0.25), 0 8px 16px rgba(14,40,65,0.08);
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid var(--grayLt);
+    animation: bannerSlideIn 0.25s cubic-bezier(0.4,0,0.2,1);
+  }
+  .ai-floater.show { display: flex; }
+  body[dir="rtl"] .ai-floater { right: auto; left: 24px; }
+  .ai-floater-header {
+    background: linear-gradient(135deg, var(--navy) 0%, var(--navyLt) 100%);
+    color: var(--white);
+    padding: 14px 18px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .ai-floater-title { display: flex; align-items: center; gap: 10px; }
+  .ai-floater-title .icon {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--teal), var(--tealDk));
+    display: flex; align-items: center; justify-content: center;
+  }
+  .ai-floater-title .text b { font-size: 13px; display: block; }
+  .ai-floater-title .text small { font-size: 10px; color: var(--tealLt); }
+  .ai-floater-close {
+    background: rgba(255,255,255,0.1); border: none; color: var(--white);
+    width: 28px; height: 28px; border-radius: 50%;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+  }
+  .ai-floater-close:hover { background: rgba(255,255,255,0.2); }
+  .ai-floater .ai-messages { padding: 16px; gap: 12px; }
+  .ai-floater .ai-message-bubble { font-size: 12px; padding: 10px 12px; }
+  .ai-floater .ai-suggestions { padding: 10px 14px; gap: 6px; }
+  .ai-floater .ai-suggestion { font-size: 10px; padding: 5px 10px; }
+  .ai-floater .ai-input-bar { padding: 10px 14px; }
+  .ai-floater .ai-input { padding: 8px 14px; font-size: 12px; }
+  .ai-floater .ai-send { width: 34px; height: 34px; }
   .timeline-time {
     font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase;
     font-weight: 700; color: var(--gray);
@@ -1462,6 +1628,32 @@
 </div>
 
 <div id="mobile-backdrop" class="mobile-backdrop" onclick="toggleMobileSidebar()"></div>
+
+<!-- AI Floating Assistant -->
+<button class="ai-bubble has-update" id="ai-bubble" onclick="toggleAIFloater()" title="Ask BRIDG8 AI">
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>
+</button>
+
+<div class="ai-floater" id="ai-floater">
+  <div class="ai-floater-header">
+    <div class="ai-floater-title">
+      <div class="icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 8V4H8M4 8h16v12H4zM2 14h2M20 14h2M15 13v2M9 13v2"/></svg></div>
+      <div class="text"><b>BRIDG8 AI</b><small>Powered by your data · demo</small></div>
+    </div>
+    <button class="ai-floater-close" onclick="toggleAIFloater()" aria-label="Close">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+  <div class="ai-messages" id="ai-floater-messages"></div>
+  <div class="ai-suggestions" id="ai-floater-suggestions"></div>
+  <div class="ai-input-bar">
+    <input class="ai-input" id="ai-floater-input" placeholder="Ask anything…" onkeydown="if(event.key==='Enter') sendAIMessage('floater')">
+    <button class="ai-send" onclick="sendAIMessage('floater')" aria-label="Send">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+    </button>
+  </div>
+</div>
+
 <div class="toast-container" id="toast-container"></div>
 <div id="notif-panel" class="notif-panel">
   <div class="notif-header">
@@ -1479,6 +1671,8 @@
 const ICONS = {
   // Department icons
   ceo:        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 9h.01M15 9h.01M9 13h.01M15 13h.01M9 17h.01M15 17h.01"/></svg>',
+  aiassist:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8V4H8M4 8h16v12H4zM2 14h2M20 14h2M15 13v2M9 13v2"/></svg>',
+  cost:       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-5"/><path d="M14 9h6v6"/></svg>',
   delivery:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>',
   design:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="2"/><path d="M15.7 21.3a1 1 0 01-1.4 0l-1.6-1.6a1 1 0 010-1.4l5.6-5.6a1 1 0 011.4 0l1.6 1.6a1 1 0 010 1.4z"/></svg>',
   development:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M5 21V8l7-4 7 4v13M9 9h6M9 13h6M9 17h6"/></svg>',
@@ -1627,8 +1821,85 @@ const PROJECTS = [
   },
 ];
 
+/* =============================================================
+   PROJECT PACKAGES - 4 packages per project
+   Budget code format: ARIRHB[ENTITY][PHASE]-[FUNCTION]-[PKG]
+   Aligned to Modon's Power Apps procurement cost tracker structure
+   All values in AED millions
+   ============================================================= */
+const PROJECT_PACKAGES = {
+  'hudayriyat-ph2': [
+    { code:'ARIRHBW2D-FOA-001', service:'Construction Works Enabling',  supplier:'Saqer Bani Yass',     original:78,    approvedVar:0,      revised:78,    spend:78,   status:'complete',  start:'10-Sep-23', end:'15-Mar-24', poNo:'1200000921' },
+    { code:'ARIRHBW2D-FOA-002', service:'Construction Works General',   supplier:'TROJAN',              original:980,   approvedVar:-12,    revised:968,   spend:721,  status:'active',    start:'13-Dec-23', end:'02-Sep-26', poNo:'1200000989' },
+    { code:'ARIRHBW2D-FOA-003', service:'Main Contractor MEP',          supplier:'MEP Prime',           original:512,   approvedVar:8.4,    revised:520,   spend:368,  status:'active',    start:'05-Jan-24', end:'30-Nov-26', poNo:'1200000983' },
+    { code:'ARIRHBW2D-FOA-004', service:'Specialist Consultancy',       supplier:'PIVOT Contracting',   original:280,   approvedVar:0,      revised:280,   spend:175,  status:'active',    start:'15-Oct-24', end:'02-Jun-27', poNo:'1200001081' },
+  ],
+  'reem-tower-a': [
+    { code:'ARIRHRTA-FOA-001', service:'Construction Works Enabling',   supplier:'Saqer Bani Yass',     original:42,    approvedVar:0,      revised:42,    spend:42,   status:'complete',  start:'05-Aug-22', end:'12-Feb-23', poNo:'1200000812' },
+    { code:'ARIRHRTA-FOA-002', service:'Construction Works General',    supplier:'TROJAN',              original:548,   approvedVar:-3.2,   revised:544.8, spend:438,  status:'active',    start:'20-Mar-23', end:'15-Jun-26', poNo:'1200000845' },
+    { code:'ARIRHRTA-FOA-003', service:'Main Contractor MEP',           supplier:'MEP Prime',           original:268,   approvedVar:5.1,    revised:273,   spend:212,  status:'active',    start:'10-May-23', end:'30-May-26', poNo:'1200000861' },
+    { code:'ARIRHRTA-FOA-004', service:'Specialist Consultancy',        supplier:'Stone & Co.',         original:122,   approvedVar:0,      revised:122,   spend:70,   status:'active',    start:'01-Jul-23', end:'15-Apr-26', poNo:'1200000877' },
+  ],
+  'reem-tower-b': [
+    { code:'ARIRHRTB-FOA-001', service:'Construction Works Enabling',   supplier:'Nexus Landscaping',   original:58,    approvedVar:0,      revised:58,    spend:42,   status:'active',    start:'15-Jan-24', end:'30-Aug-24', poNo:'1200001012' },
+    { code:'ARIRHRTB-FOA-002', service:'Construction Works General',    supplier:'GulfBuild',           original:582,   approvedVar:0,      revised:582,   spend:248,  status:'active',    start:'10-Jun-24', end:'30-Sep-26', poNo:'1200001034' },
+    { code:'ARIRHRTB-FOA-003', service:'Main Contractor MEP',           supplier:'MEP Prime',           original:248,   approvedVar:0,      revised:248,   spend:98,   status:'active',    start:'05-Aug-24', end:'15-Oct-26', poNo:'1200001056' },
+    { code:'ARIRHRTB-FOA-004', service:'Specialist Consultancy',        supplier:'Lumière Interiors',   original:132,   approvedVar:0,      revised:132,   spend:57,   status:'active',    start:'10-Sep-24', end:'30-Nov-26', poNo:'1200001079' },
+  ],
+  'reem-dev-c12': [
+    { code:'ARIRHRDP-FOA-001', service:'Construction Works Enabling',   supplier:'Saqer Bani Yass',     original:38,    approvedVar:0,      revised:38,    spend:38,   status:'complete',  start:'12-Apr-24', end:'15-Sep-24', poNo:'1200001102' },
+    { code:'ARIRHRDP-FOA-002', service:'Construction Works General',    supplier:'GulfBuild',           original:362,   approvedVar:0,      revised:362,   spend:178,  status:'active',    start:'01-Oct-24', end:'30-Jun-26', poNo:'1200001124' },
+    { code:'ARIRHRDP-FOA-003', service:'Main Contractor MEP',           supplier:'MEP Prime',           original:142,   approvedVar:0,      revised:142,   spend:48,   status:'active',    start:'15-Nov-24', end:'15-Aug-26', poNo:'1200001138' },
+    { code:'ARIRHRDP-FOA-004', service:'Specialist Consultancy',        supplier:'Archaeon Design',     original:98,    approvedVar:0,      revised:98,    spend:25,   status:'active',    start:'10-Dec-24', end:'30-Sep-26', poNo:'1200001152' },
+  ],
+  'altamouh-villa-n': [
+    { code:'ARIRHATN-FOA-001', service:'Construction Works Enabling',   supplier:'Nexus Landscaping',   original:32,    approvedVar:0,      revised:32,    spend:32,   status:'complete',  start:'10-Feb-24', end:'30-Jun-24', poNo:'1200001185' },
+    { code:'ARIRHATN-FOA-002', service:'Construction Works General',    supplier:'TROJAN',              original:248,   approvedVar:0,      revised:248,   spend:122,  status:'active',    start:'15-Jul-24', end:'30-Apr-26', poNo:'1200001201' },
+    { code:'ARIRHATN-FOA-003', service:'Main Contractor MEP',           supplier:'MEPtech',             original:88,    approvedVar:0,      revised:88,    spend:32,   status:'active',    start:'10-Aug-24', end:'15-May-26', poNo:'1200001218' },
+    { code:'ARIRHATN-FOA-004', service:'Specialist Consultancy',        supplier:'Verdant Landscape',   original:52,    approvedVar:0,      revised:52,    spend:12,   status:'active',    start:'05-Sep-24', end:'30-Jun-26', poNo:'1200001231' },
+  ],
+  'altamouh-villa-s': [
+    { code:'ARIRHATS-FOA-001', service:'Construction Works Enabling',   supplier:'Saqer Bani Yass',     original:35,    approvedVar:0,      revised:35,    spend:24,   status:'active',    start:'05-Jun-24', end:'30-Apr-25', poNo:'1200001285' },
+    { code:'ARIRHATS-FOA-002', service:'Construction Works General',    supplier:'GulfBuild',           original:212,   approvedVar:-8.5,   revised:203.5, spend:48,   status:'active',    start:'01-Nov-24', end:'30-Sep-26', poNo:'1200001301' },
+    { code:'ARIRHATS-FOA-003', service:'Main Contractor MEP',           supplier:'MEPtech',             original:82,    approvedVar:0,      revised:82,    spend:18,   status:'planned',   start:'15-Mar-25', end:'30-Nov-26', poNo:'1200001318' },
+    { code:'ARIRHATS-FOA-004', service:'Specialist Consultancy',        supplier:'TerraForm Civil',     original:56,    approvedVar:0,      revised:56,    spend:6,    status:'planned',   start:'10-Apr-25', end:'30-Dec-26', poNo:'1200001331' },
+  ],
+  'hudayriyat-marina': [
+    { code:'ARIRHMR1-FOA-001', service:'Construction Works Enabling',   supplier:'Nexus Landscaping',   original:48,    approvedVar:0,      revised:48,    spend:36,   status:'active',    start:'12-Mar-24', end:'30-Nov-24', poNo:'1200001401' },
+    { code:'ARIRHMR1-FOA-002', service:'Construction Works General',    supplier:'GulfBuild',           original:298,   approvedVar:0,      revised:298,   spend:62,   status:'active',    start:'15-Dec-24', end:'30-Sep-26', poNo:'1200001425' },
+    { code:'ARIRHMR1-FOA-003', service:'Main Contractor MEP',           supplier:'MEP Prime',           original:108,   approvedVar:0,      revised:108,   spend:18,   status:'active',    start:'10-Feb-25', end:'30-Nov-26', poNo:'1200001448' },
+    { code:'ARIRHMR1-FOA-004', service:'Specialist Consultancy',        supplier:'Lumière Interiors',   original:56,    approvedVar:0,      revised:56,    spend:16,   status:'active',    start:'05-Mar-25', end:'30-Dec-26', poNo:'1200001461' },
+  ],
+};
+
+/* =============================================================
+   POTENTIAL CHANGE REQUESTS (PCRs) - per project
+   ============================================================= */
+const PROJECT_PCRS = {
+  'hudayriyat-ph2': [
+    { id:'PCR-TP-009', date:'18-Sep-26', title:'Design Enhancement — Addition FR Ironmongery, Tiling Grout Sealer omitting External Grooves', issueValue:-11.21, stage:'In Progress', initiatedDocs:'Yes', package:'ARIRHBW2D-FOA-004' },
+    { id:'PCR-TP-014', date:'02-Oct-26', title:'MEP scope change — VO-042 (chiller plant uplift)',                                          issueValue:8.40,   stage:'Awaiting CFO',  initiatedDocs:'Yes', package:'ARIRHBW2D-FOA-003' },
+    { id:'PCR-TP-018', date:'12-Oct-26', title:'Façade panel substitution — supply chain alternate',                                        issueValue:-2.85,  stage:'Awaiting Approval', initiatedDocs:'No',  package:'ARIRHBW2D-FOA-002' },
+  ],
+  'reem-tower-a': [
+    { id:'PCR-RTA-005', date:'20-Aug-26', title:'Lobby finish material substitution',                  issueValue:1.20,   stage:'Approved',     initiatedDocs:'Yes', package:'ARIRHRTA-FOA-004' },
+    { id:'PCR-RTA-008', date:'05-Oct-26', title:'Balustrade — alternate shop drawing approval',        issueValue:-0.95,  stage:'In Progress',  initiatedDocs:'Yes', package:'ARIRHRTA-FOA-002' },
+  ],
+  'reem-tower-b': [],
+  'reem-dev-c12': [
+    { id:'PCR-RDP-002', date:'10-Sep-26', title:'Anchor tenant fit-out scope change',                  issueValue:4.50,   stage:'Awaiting Legal', initiatedDocs:'No',  package:'ARIRHRDP-FOA-002' },
+  ],
+  'altamouh-villa-n': [],
+  'altamouh-villa-s': [
+    { id:'PCR-ATS-003', date:'25-Aug-26', title:'Master community NOC remedial works',                 issueValue:-3.20,  stage:'Awaiting Authority', initiatedDocs:'No', package:'ARIRHATS-FOA-002' },
+  ],
+  'hudayriyat-marina': [],
+};
+
 const DEPARTMENTS = [
+  { id:'aiassist',    name:"AI Assistant",                desc:"Ask anything about projects, budgets, blockers",            icon:'aiassist',    initials:'AI' },
   { id:'ceo',         name:"CEO's Office",                desc:"Group portfolio rollup, strategic risks, board view",         icon:'ceo',         initials:'CO' },
+  { id:'cost',        name:"Cost Control",                desc:"Contract sums, variations, PCRs, package-level budget",      icon:'cost',        initials:'CC' },
   { id:'delivery',    name:"Delivery",                    desc:"Project delivery view, the BRIDG8 hero panel",                icon:'delivery',    initials:'DL' },
   { id:'design',      name:"Design Management",           desc:"RFIs, drawings, consultant scorecard",                        icon:'design',      initials:'DM' },
   { id:'development', name:"Development",                 desc:"Development 1 & 2 portfolios with handover forecasts",        icon:'development', initials:'DV' },
@@ -1920,6 +2191,9 @@ function renderProjectDetail(deptId, projectId) {
   const _depPath = "#/" + deptId;
   const p = PROJECTS.find(x => x.id === projectId);
   if (!p) return '<div class="card card-pad">Project not found.</div>';
+
+  // Cost Control gets its own contract-detail view (mirrors Power Apps)
+  if (deptId === 'cost') return renderCostProjectDetail(projectId);
 
   const _dept = DEPARTMENTS.find(d => d.id === deptId);
   renderBreadcrumb([
@@ -3036,6 +3310,389 @@ function renderFinance(dept) {
 }
 
 /* =============================================================
+   COST CONTROL DEPARTMENT
+   Mirrors Modon Power Apps Procurement Cost Tracker
+   ============================================================= */
+function renderCostControl(dept) {
+  // Aggregate totals across all projects' packages
+  let totalOriginal = 0, totalApprovedVar = 0, totalRevised = 0, totalSpend = 0;
+  let activeCount = 0, completeCount = 0, plannedCount = 0;
+  let totalPCRs = 0, totalPCRValue = 0;
+
+  Object.values(PROJECT_PACKAGES).forEach(packages => {
+    packages.forEach(pkg => {
+      totalOriginal += pkg.original;
+      totalApprovedVar += pkg.approvedVar;
+      totalRevised += pkg.revised;
+      totalSpend += pkg.spend;
+      if (pkg.status === 'active') activeCount++;
+      if (pkg.status === 'complete') completeCount++;
+      if (pkg.status === 'planned') plannedCount++;
+    });
+  });
+  Object.values(PROJECT_PCRS).forEach(pcrs => {
+    totalPCRs += pcrs.length;
+    pcrs.forEach(p => totalPCRValue += p.issueValue);
+  });
+
+  // Build the all-packages table (flat view across all projects)
+  const allPackages = [];
+  Object.entries(PROJECT_PACKAGES).forEach(([projId, pkgs]) => {
+    const proj = PROJECTS.find(p => p.id === projId);
+    pkgs.forEach(pkg => allPackages.push({...pkg, projectId: projId, projectName: proj ? proj.name : projId}));
+  });
+
+  // Sort: active first, then complete, then planned
+  const statusOrder = { active: 0, complete: 1, planned: 2 };
+  allPackages.sort((a,b) => statusOrder[a.status] - statusOrder[b.status]);
+
+  // Status pill helper
+  const statusPill = (s) => {
+    if (s === 'active')   return '<span class="chip chip-teal" style="background:#cfe5dd; color:#3F7D71;">Active</span>';
+    if (s === 'complete') return '<span class="chip chip-green">Complete</span>';
+    if (s === 'planned')  return '<span class="chip chip-gray">Planned</span>';
+    return `<span class="chip chip-gray">${s}</span>`;
+  };
+
+  const tableRows = allPackages.map(pkg => {
+    const variantClr = pkg.approvedVar > 0 ? 'var(--green)' : pkg.approvedVar < 0 ? 'var(--red)' : 'var(--gray)';
+    return `
+      <tr class="clickable" onclick="navigate('#/cost/projects/${pkg.projectId}')" style="cursor:pointer;">
+        <td><b style="color:var(--navy);">${pkg.code}</b><div style="font-size:10px; color:var(--gray); margin-top:2px;">${pkg.projectName}</div></td>
+        <td style="font-size:12px;">${pkg.service}</td>
+        <td>${statusPill(pkg.status)}</td>
+        <td style="font-size:12px;">${pkg.supplier}</td>
+        <td style="text-align:right; font-variant-numeric: tabular-nums;">${pkg.original.toFixed(2)}M</td>
+        <td style="text-align:right; font-variant-numeric: tabular-nums; color:${variantClr};">${pkg.approvedVar > 0 ? '+' : ''}${pkg.approvedVar.toFixed(2)}M</td>
+        <td style="text-align:right; font-variant-numeric: tabular-nums; font-weight:700;">${pkg.revised.toFixed(2)}M</td>
+        <td style="text-align:right; font-variant-numeric: tabular-nums; color:${pkg.spend/pkg.revised>0.85?'var(--amber)':'var(--charcoal)'};">${pkg.spend.toFixed(2)}M</td>
+        <td style="text-align:right;"><b>${((pkg.spend/pkg.revised)*100).toFixed(0)}%</b></td>
+        <td style="font-size:11px; color:var(--gray);">${pkg.poNo}</td>
+      </tr>`;
+  }).join('');
+
+  // PCR summary table - all PCRs across all projects
+  const allPCRs = [];
+  Object.entries(PROJECT_PCRS).forEach(([projId, pcrs]) => {
+    const proj = PROJECTS.find(p => p.id === projId);
+    pcrs.forEach(pcr => allPCRs.push({...pcr, projectId: projId, projectName: proj ? proj.name : projId}));
+  });
+
+  const pcrRows = allPCRs.map(pcr => {
+    const valClr = pcr.issueValue > 0 ? 'var(--red)' : 'var(--green)';
+    let stageChip = 'chip-gray';
+    if (pcr.stage.toLowerCase().includes('progress')) stageChip = 'chip-amber';
+    else if (pcr.stage.toLowerCase().includes('approved')) stageChip = 'chip-green';
+    else if (pcr.stage.toLowerCase().includes('cfo') || pcr.stage.toLowerCase().includes('legal') || pcr.stage.toLowerCase().includes('authority')) stageChip = 'chip-red';
+    return `
+      <tr class="clickable" onclick="navigate('#/cost/projects/${pcr.projectId}')" style="cursor:pointer;">
+        <td><b style="color:var(--navy);">${pcr.id}</b></td>
+        <td style="color:var(--gray); font-size:11px;">${pcr.date}</td>
+        <td><div style="color:var(--navy); font-weight:600;">${pcr.title}</div><div style="font-size:10px; color:var(--gray); margin-top:2px;">${pcr.projectName} · ${pcr.package}</div></td>
+        <td style="text-align:right; font-variant-numeric: tabular-nums; font-weight:700; color:${valClr};">${pcr.issueValue > 0 ? '+' : ''}${pcr.issueValue.toFixed(2)}M</td>
+        <td><span class="chip ${stageChip}">${pcr.stage.toUpperCase()}</span></td>
+        <td style="font-size:11px;">${pcr.initiatedDocs === 'Yes' ? '<span style="color:var(--green); font-weight:600;">✓ Yes</span>' : '<span style="color:var(--gray);">No</span>'}</td>
+      </tr>`;
+  }).join('') || '<tr><td colspan="6" style="text-align:center; padding:24px; color:var(--gray);">No PCRs raised.</td></tr>';
+
+  return renderHomePageHeader(dept, 'Contract sums, variations, and PCRs — across the portfolio.', `${activeCount} active packages · ${completeCount} complete · ${plannedCount} planned · AED ${(totalRevised/1000).toFixed(2)}B revised contract value`) + `
+    <div class="grid grid-cols-4 gap-4 mb-6">
+      <div class="kpi-card"><div class="kpi-label">ORIGINAL CONTRACT SUM</div><div class="kpi-value">${(totalOriginal/1000).toFixed(2)}B</div><div class="kpi-sub">across ${allPackages.length} packages</div></div>
+      <div class="kpi-card"><div class="kpi-label">APPROVED VARIATIONS</div><div class="kpi-value" style="color:${totalApprovedVar>=0?'var(--green)':'var(--red)'};">${totalApprovedVar>=0?'+':''}${totalApprovedVar.toFixed(2)}M</div><div class="kpi-sub">${totalApprovedVar>=0?'addition':'savings'} to date</div></div>
+      <div class="kpi-card"><div class="kpi-label">REVISED CONTRACT SUM</div><div class="kpi-value">${(totalRevised/1000).toFixed(2)}B</div><div class="kpi-sub">total committed</div></div>
+      <div class="kpi-card ${totalPCRs>0?'':'kpi-card'}" style="${totalPCRs>0?'background:var(--amberLt); border-color:var(--amber);':''}"><div class="kpi-label" style="${totalPCRs>0?'color:var(--amber);':''}">PCRs IN MOTION</div><div class="kpi-value" style="${totalPCRs>0?'color:var(--amber);':''}">${totalPCRs}</div><div class="kpi-sub">${totalPCRValue>=0?'+':''}${totalPCRValue.toFixed(2)}M net exposure</div></div>
+    </div>
+
+    <div class="card mb-6">
+      <div style="padding:14px 22px; border-bottom:1px solid var(--grayLt); display:flex; align-items:center; justify-content:space-between;">
+        <div>
+          <h3 style="font-size:13px; font-weight:700; color:var(--navy);">All Programs · All Projects · All Packages</h3>
+          <div style="font-size:11px; color:var(--gray); margin-top:2px;">Click any row to drill into the contract detail</div>
+        </div>
+        <div style="display:flex; gap:6px; align-items:center;">
+          <span class="chip chip-teal" style="background:#cfe5dd; color:#3F7D71;">Active</span>
+          <span class="chip chip-green">Complete</span>
+          <span class="chip chip-gray">Planned</span>
+        </div>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="data-table" style="font-size:12px;">
+          <thead>
+            <tr>
+              <th style="width:170px;">Contract No / Project</th>
+              <th>Service</th>
+              <th style="width:80px;">Status</th>
+              <th>Supplier</th>
+              <th style="text-align:right;">Original</th>
+              <th style="text-align:right;">Approved Var.</th>
+              <th style="text-align:right;">Revised</th>
+              <th style="text-align:right;">Spend</th>
+              <th style="text-align:right;">% Util</th>
+              <th>PO No.</th>
+            </tr>
+          </thead>
+          <tbody>${tableRows}</tbody>
+          <tfoot>
+            <tr style="background:var(--tealXLt); font-weight:700;">
+              <td colspan="4" style="padding:14px;"><b>TOTAL</b></td>
+              <td style="text-align:right; padding:14px; font-variant-numeric: tabular-nums;">${(totalOriginal/1000).toFixed(2)}B</td>
+              <td style="text-align:right; padding:14px; font-variant-numeric: tabular-nums; color:${totalApprovedVar>=0?'var(--green)':'var(--red)'};">${totalApprovedVar>=0?'+':''}${totalApprovedVar.toFixed(2)}M</td>
+              <td style="text-align:right; padding:14px; font-variant-numeric: tabular-nums;">${(totalRevised/1000).toFixed(2)}B</td>
+              <td style="text-align:right; padding:14px; font-variant-numeric: tabular-nums;">${(totalSpend/1000).toFixed(2)}B</td>
+              <td style="text-align:right; padding:14px;">${((totalSpend/totalRevised)*100).toFixed(0)}%</td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div style="padding:14px 22px; border-bottom:1px solid var(--grayLt); display:flex; align-items:center; justify-content:space-between;">
+        <div>
+          <h3 style="font-size:13px; font-weight:700; color:var(--navy);">Potential Change Requests (PCRs)</h3>
+          <div style="font-size:11px; color:var(--gray); margin-top:2px;">Pending and approved scope changes across all projects</div>
+        </div>
+        <div class="chip chip-amber">${totalPCRs} IN MOTION</div>
+      </div>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th style="width:130px;">PCR #</th>
+            <th style="width:110px;">Date</th>
+            <th>Title &amp; Project</th>
+            <th style="width:120px; text-align:right;">PCR Value (AED M)</th>
+            <th style="width:170px;">Stage</th>
+            <th style="width:90px;">Initiated Docs</th>
+          </tr>
+        </thead>
+        <tbody>${pcrRows}</tbody>
+      </table>
+    </div>`;
+}
+
+/* =============================================================
+   COST CONTROL — PROJECT DETAIL
+   Power Apps style with sub-tabs (Insurance / Provisional Sum /
+   Variation Orders / PCRs / Payments / Extension of Time)
+   ============================================================= */
+function renderCostProjectDetail(projectId) {
+  const p = PROJECTS.find(x => x.id === projectId);
+  if (!p) return '<div class="card card-pad">Project not found.</div>';
+
+  const route = getRoute();
+  const subtab = route[3] || 'pcr';   // default to PCR (most relevant)
+  const _dept = DEPARTMENTS.find(d => d.id === 'cost');
+
+  renderBreadcrumb([
+    { label: _dept ? _dept.name : 'Cost Control', path: '#/cost' },
+    { label: p.name, path: '#/cost/projects/' + p.id },
+  ]);
+
+  const packages = PROJECT_PACKAGES[p.id] || [];
+  const pcrs = PROJECT_PCRS[p.id] || [];
+
+  // Project-level totals from packages
+  const projOriginal = packages.reduce((s,pk) => s + pk.original, 0);
+  const projApprovedVar = packages.reduce((s,pk) => s + pk.approvedVar, 0);
+  const projRevised = packages.reduce((s,pk) => s + pk.revised, 0);
+  const projSpend = packages.reduce((s,pk) => s + pk.spend, 0);
+
+  const subtabs = [
+    { id:'insurance',     label:'Insurance' },
+    { id:'provisional',   label:'Provisional Sum' },
+    { id:'variations',    label:'Variation Orders' },
+    { id:'pcr',           label:'Potential Change Request', highlight: pcrs.length > 0 },
+    { id:'payments',      label:'Payments' },
+    { id:'eot',           label:'Extension of Time' },
+  ];
+
+  const subtabsHTML = subtabs.map(t => {
+    const active = subtab === t.id;
+    let bg = 'transparent', clr = 'var(--gray)', border = '1px solid var(--grayLt)';
+    if (active) {
+      if (t.id === 'pcr') { bg = 'var(--red)'; clr = 'var(--white)'; border = '1px solid var(--red)'; }
+      else { bg = 'var(--navy)'; clr = 'var(--white)'; border = '1px solid var(--navy)'; }
+    } else if (t.highlight) {
+      bg = 'var(--redLt)'; clr = 'var(--red)'; border = '1px solid var(--red)';
+    }
+    return `<button onclick="navigate('#/cost/projects/${p.id}/${t.id}')" style="padding:7px 14px; font-size:11px; font-weight:700; border-radius:4px; cursor:pointer; font-family:inherit; background:${bg}; color:${clr}; border:${border}; transition:all 0.15s;">${t.label}</button>`;
+  }).join('');
+
+  // Tab content
+  let tabContent = '';
+  if (subtab === 'pcr') {
+    const pcrRows = pcrs.map(pcr => {
+      const valClr = pcr.issueValue > 0 ? 'var(--red)' : 'var(--green)';
+      let stageChip = 'chip-gray';
+      if (pcr.stage.toLowerCase().includes('progress')) stageChip = 'chip-amber';
+      else if (pcr.stage.toLowerCase().includes('approved')) stageChip = 'chip-green';
+      else if (pcr.stage.toLowerCase().includes('cfo') || pcr.stage.toLowerCase().includes('legal') || pcr.stage.toLowerCase().includes('authority')) stageChip = 'chip-red';
+      return `
+        <tr>
+          <td><b style="color:var(--navy);">${pcr.id}</b></td>
+          <td style="color:var(--gray); font-size:11px;">${pcr.date}</td>
+          <td><div style="color:var(--navy); font-weight:600;">${pcr.title}</div><div style="font-size:10px; color:var(--gray); margin-top:2px;">Package: ${pcr.package}</div></td>
+          <td><div style="color:var(--charcoal); font-size:12px; line-height:1.4;">${pcr.title}</div></td>
+          <td style="text-align:right; font-variant-numeric: tabular-nums; font-weight:700; color:${valClr};">${pcr.issueValue > 0 ? '+' : ''}${pcr.issueValue.toFixed(2)}M</td>
+          <td><span class="chip ${stageChip}">${pcr.stage.toUpperCase()}</span></td>
+          <td>${pcr.initiatedDocs === 'Yes' ? '<span class="chip chip-green">✓ YES</span>' : '<span class="chip chip-gray">NO</span>'}</td>
+        </tr>`;
+    }).join('') || '<tr><td colspan="7" style="text-align:center; padding:40px; color:var(--gray);">No PCRs raised on this project.</td></tr>';
+
+    tabContent = `
+      <div style="overflow-x:auto;">
+        <table class="data-table" style="font-size:12px;">
+          <thead>
+            <tr>
+              <th style="width:120px;">PCR #</th>
+              <th style="width:110px;">Approval Date</th>
+              <th style="width:240px;">PCR Title</th>
+              <th>Description</th>
+              <th style="width:120px; text-align:right;">PCR Issue Value</th>
+              <th style="width:160px;">Moved to VORR Stage</th>
+              <th style="width:100px;">Initiated in Docs</th>
+            </tr>
+          </thead>
+          <tbody>${pcrRows}</tbody>
+        </table>
+      </div>`;
+  } else if (subtab === 'variations') {
+    tabContent = `
+      <div style="padding:32px; text-align:center; color:var(--gray);">
+        <div style="font-size:32px; margin-bottom:8px;">📋</div>
+        <div style="font-size:13px; font-weight:600; color:var(--navy); margin-bottom:4px;">Variation Orders</div>
+        <div style="font-size:12px;">${packages.filter(pk => pk.approvedVar !== 0).length} approved variations · net ${projApprovedVar >= 0 ? '+' : ''}${projApprovedVar.toFixed(2)}M</div>
+        <div style="font-size:11px; margin-top:14px; color:var(--gray);">Approved variations are reflected in the package table below.</div>
+      </div>`;
+  } else if (subtab === 'payments') {
+    tabContent = `
+      <div style="padding:32px; text-align:center; color:var(--gray);">
+        <div style="font-size:32px; margin-bottom:8px;">💳</div>
+        <div style="font-size:13px; font-weight:600; color:var(--navy); margin-bottom:4px;">Payments</div>
+        <div style="font-size:12px;">Total spend to date: AED ${projSpend.toFixed(2)}M (${((projSpend/projRevised)*100).toFixed(0)}% of revised)</div>
+      </div>`;
+  } else if (subtab === 'insurance') {
+    tabContent = `
+      <div style="padding:32px; text-align:center; color:var(--gray);">
+        <div style="font-size:32px; margin-bottom:8px;">🛡️</div>
+        <div style="font-size:13px; font-weight:600; color:var(--navy); margin-bottom:4px;">Insurance</div>
+        <div style="font-size:12px;">All ${packages.length} packages have valid CAR + Workmen's policies</div>
+      </div>`;
+  } else if (subtab === 'provisional') {
+    tabContent = `
+      <div style="padding:32px; text-align:center; color:var(--gray);">
+        <div style="font-size:32px; margin-bottom:8px;">📊</div>
+        <div style="font-size:13px; font-weight:600; color:var(--navy); margin-bottom:4px;">Provisional Sum</div>
+        <div style="font-size:12px;">Provisional sums tracked at package level</div>
+      </div>`;
+  } else if (subtab === 'eot') {
+    tabContent = `
+      <div style="padding:32px; text-align:center; color:var(--gray);">
+        <div style="font-size:32px; margin-bottom:8px;">⏱️</div>
+        <div style="font-size:13px; font-weight:600; color:var(--navy); margin-bottom:4px;">Extension of Time</div>
+        <div style="font-size:12px;">${p.slippage > 0 ? `Current slippage: +${p.slippage} weeks vs. planned handover` : 'No EoT claims raised'}</div>
+      </div>`;
+  }
+
+  // Status pill helper (reused)
+  const statusPill = (s) => {
+    if (s === 'active')   return '<span class="chip chip-teal" style="background:#cfe5dd; color:#3F7D71;">Active</span>';
+    if (s === 'complete') return '<span class="chip chip-green">Complete</span>';
+    if (s === 'planned')  return '<span class="chip chip-gray">Planned</span>';
+    return `<span class="chip chip-gray">${s}</span>`;
+  };
+
+  // Package summary table (always visible)
+  const pkgRows = packages.map(pkg => {
+    const variantClr = pkg.approvedVar > 0 ? 'var(--green)' : pkg.approvedVar < 0 ? 'var(--red)' : 'var(--gray)';
+    const utilPct = (pkg.spend/pkg.revised)*100;
+    return `
+      <tr>
+        <td><b style="color:var(--navy);">${pkg.code}</b></td>
+        <td style="font-size:12px;">${pkg.service}</td>
+        <td>${statusPill(pkg.status)}</td>
+        <td style="font-size:12px;">${pkg.supplier}</td>
+        <td style="text-align:right; font-variant-numeric: tabular-nums;">${pkg.original.toFixed(2)}M</td>
+        <td style="text-align:right; font-variant-numeric: tabular-nums; color:${variantClr};">${pkg.approvedVar > 0 ? '+' : ''}${pkg.approvedVar.toFixed(2)}M</td>
+        <td style="text-align:right; font-variant-numeric: tabular-nums; font-weight:700;">${pkg.revised.toFixed(2)}M</td>
+        <td style="text-align:right; font-variant-numeric: tabular-nums;">${pkg.spend.toFixed(2)}M</td>
+        <td style="text-align:right;"><b style="color:${utilPct>90?'var(--red)':utilPct>75?'var(--amber)':'var(--charcoal)'};">${utilPct.toFixed(0)}%</b></td>
+      </tr>`;
+  }).join('');
+
+  return `
+    <div class="page-fade">
+      <button class="back-link" onclick="navigate('#/cost')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        Back to Cost Control
+      </button>
+
+      <div class="page-header">
+        <div class="page-header-row">
+          <div>
+            <div class="eyebrow">CONTRACT DETAIL</div>
+            <div style="display:flex; align-items:center; gap:12px;">
+              <h1>${p.name}</h1>
+              ${statusChip(p.status)}
+            </div>
+            <div class="subtitle">${p.entity} · PM: ${p.pm} · ${packages.length} packages · AED ${(projRevised/1000).toFixed(2)}B revised contract value</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-4 gap-4 mb-6">
+        <div class="kpi-card"><div class="kpi-label">ORIGINAL CONTRACT</div><div class="kpi-value">${(projOriginal/1000).toFixed(2)}B</div><div class="kpi-sub">across ${packages.length} packages</div></div>
+        <div class="kpi-card"><div class="kpi-label">APPROVED VARIATIONS</div><div class="kpi-value" style="color:${projApprovedVar>=0?'var(--green)':'var(--red)'};">${projApprovedVar>=0?'+':''}${projApprovedVar.toFixed(2)}M</div><div class="kpi-sub">${projApprovedVar>=0?'addition':'savings'}</div></div>
+        <div class="kpi-card"><div class="kpi-label">REVISED CONTRACT</div><div class="kpi-value">${(projRevised/1000).toFixed(2)}B</div><div class="kpi-sub">total committed</div></div>
+        <div class="kpi-card ${pcrs.length>0?'':''}" style="${pcrs.length>0?'background:var(--redLt); border-color:var(--red);':''}"><div class="kpi-label" style="${pcrs.length>0?'color:var(--red);':''}">PCRs OPEN</div><div class="kpi-value" style="${pcrs.length>0?'color:var(--red);':''}">${pcrs.length}</div><div class="kpi-sub">${pcrs.length>0?'awaiting decisions':'no pending'}</div></div>
+      </div>
+
+      <div class="card mb-6">
+        <div style="padding:14px 22px; border-bottom:1px solid var(--grayLt); display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+          ${subtabsHTML}
+        </div>
+        ${tabContent}
+      </div>
+
+      <div class="card">
+        <div style="padding:14px 22px; border-bottom:1px solid var(--grayLt);">
+          <h3 style="font-size:13px; font-weight:700; color:var(--navy);">Package breakdown</h3>
+          <div style="font-size:11px; color:var(--gray); margin-top:2px;">4 standard packages with budget codes and PO references</div>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="data-table" style="font-size:12px;">
+            <thead>
+              <tr>
+                <th style="width:170px;">Budget Code</th>
+                <th>Service</th>
+                <th style="width:80px;">Status</th>
+                <th>Supplier</th>
+                <th style="text-align:right;">Original</th>
+                <th style="text-align:right;">Approved Var.</th>
+                <th style="text-align:right;">Revised</th>
+                <th style="text-align:right;">Spend</th>
+                <th style="text-align:right;">% Util</th>
+              </tr>
+            </thead>
+            <tbody>${pkgRows}</tbody>
+            <tfoot>
+              <tr style="background:var(--tealXLt); font-weight:700;">
+                <td colspan="4" style="padding:14px;"><b>PROJECT TOTAL</b></td>
+                <td style="text-align:right; padding:14px; font-variant-numeric: tabular-nums;">${(projOriginal/1000).toFixed(2)}B</td>
+                <td style="text-align:right; padding:14px; font-variant-numeric: tabular-nums; color:${projApprovedVar>=0?'var(--green)':'var(--red)'};">${projApprovedVar>=0?'+':''}${projApprovedVar.toFixed(2)}M</td>
+                <td style="text-align:right; padding:14px; font-variant-numeric: tabular-nums;">${(projRevised/1000).toFixed(2)}B</td>
+                <td style="text-align:right; padding:14px; font-variant-numeric: tabular-nums;">${projSpend.toFixed(2)}M</td>
+                <td style="text-align:right; padding:14px;">${((projSpend/projRevised)*100).toFixed(0)}%</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+    </div>`;
+}
+
+/* =============================================================
    RENDER DISPATCHER
    ============================================================= */
 function render() {
@@ -3072,6 +3729,8 @@ function render() {
   } else {
     // Department home
     if      (deptId === 'ceo')         html = renderCEO(dept);
+    else if (deptId === 'aiassist')    html = renderAIAssistant(dept);
+    else if (deptId === 'cost')        html = renderCostControl(dept);
     else if (deptId === 'delivery')    html = renderDelivery(dept);
     else if (deptId === 'design')      html = renderDesign(dept);
     else if (deptId === 'development') html = renderDevelopment(dept);
@@ -3651,6 +4310,234 @@ function showOnboarding() {
 function dismissOnboarding() {
   _hasOnboarded = true;
   document.getElementById('onboard-root')?.remove();
+}
+
+/* =============================================================
+   AI ASSISTANT (scripted demo)
+   ============================================================= */
+const AI_KB = [
+  {
+    keywords: ['vo-042','vo 042','vo042','variation order','chiller','mep scope'],
+    answer: `<strong>VO-042 — MEP scope change · AED 8.4M</strong><br>
+On <strong>Hudayriyat Phase 2 Residential</strong>, owned by <strong>Fatima A. (Finance)</strong>, currently <strong>12 days open</strong> and awaiting CFO sign-off.<br><br>
+Impact: blocks MEP contractor on floors 14–18. Standby cost ≈ <strong>AED 180K/week</strong>.<br><br>
+BRIDG8 has already auto-reminded the owner on day 3, escalated to Head of Finance on day 7, and surfaced it on the executive heatmap on day 10. The next step is CFO approval — a delay beyond 14 days will trigger contractor LD claim eligibility.<br><br>
+<em>Recommendation:</em> Approve immediately to retain handover commitment.`
+  },
+  {
+    keywords: ['pending','pending items','blockers','what is pending','open items'],
+    answer: `Across the portfolio, <strong>15 items are pending</strong> from other functions:<br>
+<ul>
+  <li><strong>3 critical</strong> — VO-042 (Finance, 12d), Master Community NOC (Legal, 28d), ADDC NOC (Legal, 21d)</li>
+  <li><strong>10 watch</strong> — across Procurement, Design, and Finance</li>
+  <li><strong>2 low</strong> — site-level coordination items</li>
+</ul>
+The oldest blocker is the Master Community NOC on Al Tamouh Villa Cluster South — it's been open <strong>28 days</strong> and is blocking infrastructure mobilization.`
+  },
+  {
+    keywords: ['risk','at risk','top risk','critical','red flag'],
+    answer: `<strong>2 projects are at risk</strong> right now:<br>
+<ul>
+  <li><strong>Hudayriyat Phase 2 Residential</strong> — 14 weeks slippage, 7 pending items, AED 1.85B exposure</li>
+  <li><strong>Al Tamouh — Villa Cluster South</strong> — 10 weeks slippage, 2 pending items, AED 385M exposure</li>
+</ul>
+The biggest single risk driver is the <strong>Master Community NOC</strong> on Al Tamouh South — 28 days open, blocking infrastructure mobilization.`
+  },
+  {
+    keywords: ['handover','schedule','delivery date','when will','reem tower a','tower a'],
+    answer: `<strong>Reem Hills Tower A</strong> is forecast for <strong>Q2 2026</strong> handover, with current slippage of <strong>+3 weeks</strong> vs. the planned date.<br><br>
+The schedule risk is amber. The remaining blockers are:
+<ul>
+  <li>Balustrade — shop drawing approval (Procurement, 8d)</li>
+  <li>Final retention release schedule (Finance, 5d)</li>
+</ul>
+With these resolved, the project is on track for handover in Q2 2026.`
+  },
+  {
+    keywords: ['vendor','supplier','at risk vendor','procurement risk'],
+    answer: `<strong>2 vendors are flagged at risk</strong> across the portfolio:<br>
+<ul>
+  <li><strong>MEP Prime Engineering</strong> — AED 42.5M open PO, 62% on-time, awaiting VO-042 approval to resume</li>
+  <li><strong>GulfBuild Structures</strong> — AED 58.3M open PO, 54% on-time, multiple programme slips on Reem Dev C12 and Hudayriyat Marina</li>
+</ul>
+Combined exposure on at-risk vendors: <strong>AED 100.8M</strong>.<br><br>
+Top 3 vendors account for <strong>72%</strong> of open contract commitments — concentration risk worth monitoring.`
+  },
+  {
+    keywords: ['budget','spend','overrun','financial','finance summary','utilisation','utilization'],
+    answer: `<strong>Group budget position:</strong><br>
+<ul>
+  <li>Total committed capital: <strong>AED 5.80B</strong> across 7 active projects</li>
+  <li>Spend to date: <strong>AED 3.26B</strong> (56% utilised)</li>
+  <li>Approved variations net: <strong>-AED 10.20M</strong> (savings to date)</li>
+  <li>Forecast accuracy: <strong>81%</strong> (target: 92%)</li>
+</ul>
+Variance alert: <strong>Hudayriyat Phase 2</strong> is committed at 91% but progress is only 68% — material overrun risk forming. VO-042 (AED 8.4M) needs an accrual decision by month-end.`
+  },
+  {
+    keywords: ['noc','authority','addc','dewa','municipality','approval pending'],
+    answer: `<strong>5 NOCs are currently active</strong>, with 2 critical:<br>
+<ul>
+  <li><strong>NOC-2026-021 · Municipality</strong> — Master community NOC on Al Tamouh South, <strong>28 days open</strong></li>
+  <li><strong>NOC-2026-018 · ADDC</strong> — Substation relocation on Hudayriyat Phase 2, <strong>21 days open</strong></li>
+  <li><strong>NOC-2026-029 · DEWA</strong> — Transformer capacity uplift, 9 days</li>
+  <li><strong>NOC-2026-031 · TRA</strong> — Telecom infrastructure, 6 days</li>
+  <li><strong>NOC-2026-035 · Civil Defense</strong> — Fire safety final approval, 3 days (approved, awaiting cert)</li>
+</ul>
+Average open age: 13.4 days (target ≤14).`
+  },
+  {
+    keywords: ['pcr','potential change','change request','scope change'],
+    answer: `<strong>7 PCRs are in motion</strong> across the portfolio, with a net exposure of <strong>-AED 4.11M</strong> (slight savings):<br>
+<ul>
+  <li>3 awaiting decisions (CFO, Legal, Authority)</li>
+  <li>2 in progress / under review</li>
+  <li>1 approved</li>
+  <li>1 awaiting general approval</li>
+</ul>
+The largest single PCR is <strong>PCR-TP-009</strong> on Hudayriyat Phase 2 (-AED 11.21M) — Design Enhancement work currently in progress.`
+  },
+];
+
+const AI_DEFAULT_ANSWER = `I can help you find information across all 11 departments — projects, budgets, vendors, NOCs, RFIs, schedules, escalations, and more.<br><br>
+Try asking about:
+<ul>
+  <li>"Tell me about VO-042"</li>
+  <li>"What's pending on Hudayriyat Phase 2?"</li>
+  <li>"Which projects are at risk?"</li>
+  <li>"Show me vendor risks"</li>
+  <li>"What's the budget position?"</li>
+  <li>"NOCs awaiting authority response"</li>
+</ul>
+<em>Note: This is a demo — answers are scripted from the prototype data.</em>`;
+
+const AI_SUGGESTIONS = [
+  "Tell me about VO-042",
+  "What's pending across the portfolio?",
+  "Which projects are at risk?",
+  "Show vendor risks",
+  "Budget position",
+  "Active NOCs",
+];
+
+let _aiHistory = { page: [], floater: [] };
+let _aiInitialized = { page: false, floater: false };
+
+function aiAnswerFor(query) {
+  const q = query.toLowerCase();
+  for (const entry of AI_KB) {
+    if (entry.keywords.some(k => q.includes(k))) return entry.answer;
+  }
+  return AI_DEFAULT_ANSWER;
+}
+
+function sendAIMessage(target) {
+  const inputId = target === 'page' ? 'ai-page-input' : 'ai-floater-input';
+  const input = document.getElementById(inputId);
+  if (!input) return;
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+
+  _aiHistory[target].push({ role: 'user', text: text });
+  renderAIMessages(target);
+
+  // Show typing indicator
+  setTimeout(() => {
+    _aiHistory[target].push({ role: 'assistant', text: '__TYPING__' });
+    renderAIMessages(target);
+    // Generate answer with realistic delay
+    setTimeout(() => {
+      _aiHistory[target].pop();  // remove typing
+      _aiHistory[target].push({ role: 'assistant', text: aiAnswerFor(text) });
+      renderAIMessages(target);
+    }, 700 + Math.min(text.length * 18, 1400));
+  }, 200);
+}
+
+function aiQuickAsk(target, text) {
+  const inputId = target === 'page' ? 'ai-page-input' : 'ai-floater-input';
+  const input = document.getElementById(inputId);
+  if (input) input.value = text;
+  sendAIMessage(target);
+}
+
+function renderAIMessages(target) {
+  const containerId = target === 'page' ? 'ai-page-messages' : 'ai-floater-messages';
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  const html = _aiHistory[target].map(m => {
+    if (m.text === '__TYPING__') {
+      return `<div class="ai-message assistant">
+        <div class="ai-message-avatar">AI</div>
+        <div class="ai-message-bubble"><div class="ai-typing"><div class="ai-typing-dot"></div><div class="ai-typing-dot"></div><div class="ai-typing-dot"></div></div></div>
+      </div>`;
+    }
+    if (m.role === 'user') {
+      return `<div class="ai-message user">
+        <div class="ai-message-avatar">${STATE.user.initials || 'U'}</div>
+        <div class="ai-message-bubble">${escapeHTML(m.text)}</div>
+      </div>`;
+    }
+    return `<div class="ai-message assistant">
+      <div class="ai-message-avatar">AI</div>
+      <div class="ai-message-bubble">${m.text}</div>
+    </div>`;
+  }).join('');
+  container.innerHTML = html;
+  container.scrollTop = container.scrollHeight;
+}
+
+function initAIChat(target) {
+  if (_aiInitialized[target]) return;
+  _aiInitialized[target] = true;
+  _aiHistory[target] = [{
+    role: 'assistant',
+    text: `Hi ${STATE.user.name ? STATE.user.name.replace(/'s.*/, '') : 'there'}, I'm BRIDG8 AI. I have access to all 7 active projects, ${Object.values(PROJECT_PACKAGES).flat().length} contract packages, all open RFIs, NOCs, and pending items. Ask me anything.`
+  }];
+  renderAIMessages(target);
+
+  // Suggestions
+  const suggId = target === 'page' ? 'ai-page-suggestions' : 'ai-floater-suggestions';
+  const suggEl = document.getElementById(suggId);
+  if (suggEl) {
+    suggEl.innerHTML = AI_SUGGESTIONS.map(s =>
+      `<button class="ai-suggestion" onclick="aiQuickAsk('${target}', ${JSON.stringify(s).replace(/"/g, '&quot;')})">${s}</button>`
+    ).join('');
+  }
+}
+
+function toggleAIFloater() {
+  const fl = document.getElementById('ai-floater');
+  if (!fl) return;
+  fl.classList.toggle('show');
+  if (fl.classList.contains('show')) {
+    initAIChat('floater');
+    document.getElementById('ai-bubble')?.classList.remove('has-update');
+    setTimeout(() => document.getElementById('ai-floater-input')?.focus(), 100);
+  }
+}
+
+/* AI Assistant full page */
+function renderAIAssistant(dept) {
+  setTimeout(() => initAIChat('page'), 50);
+  return renderHomePageHeader(dept, 'BRIDG8 AI — ask anything across the portfolio.', `Connected to all 7 active projects · ${Object.values(PROJECT_PACKAGES).flat().length} contract packages · 8 open RFIs · 5 active NOCs · live escalation queue`) + `
+    <div class="ai-mock-banner">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+      Demo prototype — responses are scripted from the prototype's project data
+    </div>
+    <div class="ai-page">
+      <div class="ai-chat-container">
+        <div class="ai-messages" id="ai-page-messages"></div>
+        <div class="ai-suggestions" id="ai-page-suggestions"></div>
+        <div class="ai-input-bar">
+          <input class="ai-input" id="ai-page-input" placeholder="Ask BRIDG8 AI anything about projects, budgets, blockers, vendors, NOCs…" onkeydown="if(event.key==='Enter') sendAIMessage('page')">
+          <button class="ai-send" onclick="sendAIMessage('page')" aria-label="Send">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>`;
 }
 
 /* =============================================================
